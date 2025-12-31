@@ -205,7 +205,15 @@ public class LineEditor {
             // Insert in middle - need to redraw
             buffer.insert(cursorPos, c);
             cursorPos++;
-            redrawFromCursor();
+
+            // Write from current position to end (including the char we just inserted)
+            terminal.write(buffer.substring(cursorPos - 1).getBytes());
+
+            // Move cursor back to correct position (after the inserted char)
+            int charsAfterCursor = buffer.length() - cursorPos;
+            for (int i = 0; i < charsAfterCursor; i++) {
+                terminal.write(CURSOR_LEFT.getBytes());
+            }
         }
     }
 
@@ -216,7 +224,23 @@ public class LineEditor {
         if (cursorPos > 0) {
             buffer.deleteCharAt(cursorPos - 1);
             cursorPos--;
-            redrawFromCursor();
+
+            // Move cursor back one position
+            terminal.write(CURSOR_LEFT.getBytes());
+
+            // Write everything from current position to end of buffer
+            if (cursorPos < buffer.length()) {
+                terminal.write(buffer.substring(cursorPos).getBytes());
+            }
+
+            // Clear any trailing character
+            terminal.write(CLEAR_TO_EOL.getBytes());
+
+            // Move cursor back to correct position
+            int charsAfterCursor = buffer.length() - cursorPos;
+            for (int i = 0; i < charsAfterCursor; i++) {
+                terminal.write(CURSOR_LEFT.getBytes());
+            }
         }
     }
 
