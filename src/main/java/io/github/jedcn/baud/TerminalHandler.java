@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 
-public class TerminalHandler implements AutoCloseable {
+public class TerminalHandler implements TerminalWriter, AutoCloseable {
 
     private static final boolean DEBUG = "true".equalsIgnoreCase(System.getenv("DEBUG"));
 

@@ -31,12 +31,12 @@ public class LineEditor {
         CSI_SEEN     // ESC [ received, waiting for final byte
     }
 
-    private final TerminalHandler terminal;
+    private final TerminalWriter terminal;
     private final StringBuilder buffer;
     private int cursorPos;
     private ParseState state;
 
-    public LineEditor(TerminalHandler terminal) {
+    public LineEditor(TerminalWriter terminal) {
         this.terminal = terminal;
         this.buffer = new StringBuilder();
         this.cursorPos = 0;
