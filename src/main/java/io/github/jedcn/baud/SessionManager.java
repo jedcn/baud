@@ -10,6 +10,7 @@ public class SessionManager {
 
     private final TerminalHandler terminalHandler;
     private final TelnetSession telnetSession;
+    private final LineEditor lineEditor;
     private volatile boolean running;
 
     // Escape sequence: Ctrl+] (ASCII 29)
@@ -20,6 +21,7 @@ public class SessionManager {
     public SessionManager(TerminalHandler terminalHandler, TelnetSession telnetSession) {
         this.terminalHandler = terminalHandler;
         this.telnetSession = telnetSession;
+        this.lineEditor = new LineEditor(terminalHandler);
         this.running = false;
     }
 
@@ -122,9 +124,24 @@ public class SessionManager {
                     continue;
                 }
 
-                // Send character to BBS
-                telnetOutput.write(ch);
-                telnetOutput.flush();
+                // Process character through line editor
+                boolean lineComplete = lineEditor.processChar(ch);
+
+                if (lineComplete) {
+                    // Get the complete line and send to BBS
+                    String line = lineEditor.getLine();
+                    telnetOutput.write(line.getBytes());
+                    telnetOutput.write('\r');  // Send carriage return
+                    telnetOutput.write('\n');  // Send line feed
+                    telnetOutput.flush();
+
+                    if (DEBUG) {
+                        System.err.println("[DEBUG] Sent line to BBS: " + line);
+                    }
+
+                    // Reset line editor for next line
+                    lineEditor.reset();
+                }
             }
         } catch (IOException e) {
             if (DEBUG) {
