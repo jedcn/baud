@@ -6,6 +6,7 @@ A Java CLI application for connecting to Bulletin Board Systems (BBS) via telnet
 
 - **Telnet Protocol**: Full telnet support using Apache Commons Net
 - **ANSI Graphics**: Faithful rendering of ANSI escape codes, colors, and ASCII art
+- **Line Editing**: Local line editing with cursor movement, backspace, forward delete, and kill commands
 - **Raw Terminal Mode**: Character-by-character I/O for responsive BBS interaction
 - **Cross-Platform**: Works on Windows, macOS, and Linux via JLine
 - **Simple Interface**: Easy command-line usage
@@ -59,6 +60,22 @@ Create a `baud.bat` file in a directory on your PATH:
 java -jar C:\path\to\baud\target\baud-1.0-SNAPSHOT.jar %*
 ```
 
+## Testing
+
+Run the unit test suite with Maven:
+
+```bash
+mvn test
+```
+
+The project uses JUnit 5 for testing. Tests are located in `src/test/java/` and cover core functionality including line editing, cursor movement, and text manipulation.
+
+To run tests with verbose output:
+
+```bash
+mvn test -X
+```
+
 ## Usage
 
 ### Basic Connection
@@ -93,10 +110,40 @@ Display help information:
 baud --help
 ```
 
+### Debug Mode
+
+Enable debug output by setting the DEBUG environment variable:
+
+```bash
+DEBUG=true baud bbs.example.com
+```
+
+This will print additional diagnostic information during the session, useful for troubleshooting connection issues or character encoding problems.
+
 ## Controls
 
-- **Regular typing**: Characters are sent directly to the BBS as you type
-- **Ctrl+]**: Enter command mode
+### Line Editing
+
+Baud supports local line editing with cursor movement and editing commands:
+
+**Cursor Movement:**
+- **Left/Right Arrow Keys**: Move cursor backward/forward one character
+- **Ctrl+A**: Jump to beginning of line
+- **Ctrl+E**: Jump to end of line
+- **Ctrl+B**: Move backward one character (same as left arrow)
+- **Ctrl+F**: Move forward one character (same as right arrow)
+
+**Editing:**
+- **Backspace**: Delete character before cursor
+- **Ctrl+D**: Forward delete (delete character at cursor)
+- **Ctrl+K**: Delete from cursor to end of line
+
+**Line Completion:**
+- **Enter**: Send complete line to BBS
+
+### Command Mode
+
+- **Ctrl+]**: Enter telnet command mode
   - Type `quit` or `q` and press Enter to disconnect
 
 ## Technical Details
