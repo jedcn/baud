@@ -14,6 +14,7 @@ public class LineEditor {
     // Control characters
     private static final int CTRL_A = 1;
     private static final int CTRL_B = 2;
+    private static final int CTRL_D = 4;
     private static final int CTRL_E = 5;
     private static final int CTRL_F = 6;
     private static final int CTRL_K = 11;
@@ -125,6 +126,11 @@ public class LineEditor {
 
         if (ch == CTRL_K) {
             handleKillLine();
+            return false;
+        }
+
+        if (ch == CTRL_D) {
+            handleForwardDelete();
             return false;
         }
 
@@ -291,6 +297,30 @@ public class LineEditor {
         if (cursorPos < buffer.length()) {
             buffer.setLength(cursorPos);
             terminal.write(CLEAR_TO_EOL.getBytes());
+        }
+    }
+
+    /**
+     * Handle CTRL-D (forward delete - delete character at cursor).
+     */
+    private void handleForwardDelete() throws IOException {
+        if (cursorPos < buffer.length()) {
+            // Delete character at cursor position
+            buffer.deleteCharAt(cursorPos);
+
+            // Write everything from current position to end of buffer
+            if (cursorPos < buffer.length()) {
+                terminal.write(buffer.substring(cursorPos).getBytes());
+            }
+
+            // Clear any trailing character
+            terminal.write(CLEAR_TO_EOL.getBytes());
+
+            // Move cursor back to correct position (stays at same spot)
+            int charsAfterCursor = buffer.length() - cursorPos;
+            for (int i = 0; i < charsAfterCursor; i++) {
+                terminal.write(CURSOR_LEFT.getBytes());
+            }
         }
     }
 
