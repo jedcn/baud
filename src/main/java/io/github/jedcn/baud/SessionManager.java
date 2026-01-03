@@ -11,6 +11,7 @@ public class SessionManager {
     private final TerminalHandler terminalHandler;
     private final TelnetSession telnetSession;
     private final LineEditor lineEditor;
+    private final ExpansionManager expansionManager;
     private volatile boolean running;
 
     // Escape sequence: Ctrl+] (ASCII 29)
@@ -19,9 +20,14 @@ public class SessionManager {
     private StringBuilder escapeCommand = new StringBuilder();
 
     public SessionManager(TerminalHandler terminalHandler, TelnetSession telnetSession) {
+        this(terminalHandler, telnetSession, null);
+    }
+
+    public SessionManager(TerminalHandler terminalHandler, TelnetSession telnetSession, ExpansionManager expansionManager) {
         this.terminalHandler = terminalHandler;
         this.telnetSession = telnetSession;
         this.lineEditor = new LineEditor(terminalHandler);
+        this.expansionManager = expansionManager;
         this.running = false;
     }
 
@@ -130,6 +136,19 @@ public class SessionManager {
                 if (lineComplete) {
                     // Get the complete line and send to BBS
                     String line = lineEditor.getLine();
+
+                    // Apply expansion if manager exists
+                    if (expansionManager != null) {
+                        String trimmed = line.trim();
+                        String expanded = expansionManager.expand(trimmed);
+                        if (!expanded.equals(trimmed)) {
+                            line = expanded;
+                            if (DEBUG) {
+                                System.err.println("[DEBUG] Applied expansion: '" + trimmed + "' -> '" + expanded + "'");
+                            }
+                        }
+                    }
+
                     telnetOutput.write(line.getBytes());
                     telnetOutput.write('\r');  // Send carriage return
                     telnetOutput.write('\n');  // Send line feed

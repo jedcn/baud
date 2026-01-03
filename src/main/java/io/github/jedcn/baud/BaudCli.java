@@ -35,9 +35,28 @@ public class BaudCli implements Callable<Integer> {
     )
     private int timeout;
 
+    @Option(
+        names = {"--expansions"},
+        description = "Path to text expansions file"
+    )
+    private String expansionsFile;
+
     @Override
     public Integer call() throws Exception {
         System.out.println("Connecting to " + host + ":" + port + "...");
+
+        // Load expansions if specified
+        ExpansionManager expansionManager = null;
+        if (expansionsFile != null) {
+            expansionManager = new ExpansionManager();
+            try {
+                expansionManager.loadFromFile(expansionsFile);
+                System.out.println("Loaded " + expansionManager.size() + " text expansions from " + expansionsFile);
+            } catch (Exception e) {
+                System.err.println("Warning: Could not load expansions file: " + e.getMessage());
+                expansionManager = null;
+            }
+        }
 
         try (TerminalHandler terminalHandler = new TerminalHandler();
              TelnetSession telnetSession = new TelnetSession()) {
@@ -47,7 +66,7 @@ public class BaudCli implements Callable<Integer> {
             System.out.println("Connected! Press Ctrl+] followed by 'quit' to disconnect.");
 
             // Start the session
-            SessionManager sessionManager = new SessionManager(terminalHandler, telnetSession);
+            SessionManager sessionManager = new SessionManager(terminalHandler, telnetSession, expansionManager);
             sessionManager.run();
 
             System.out.println("\nDisconnected from " + host);
