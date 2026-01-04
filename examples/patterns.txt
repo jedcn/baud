@@ -1,0 +1,14 @@
+# Lua Pattern Matching Configuration
+# Format: REGEX_PATTERN | script_name.lua | COMMENT
+#
+# When the BBS sends text matching a pattern, the associated Lua script
+# is executed with capture groups available in the match[] array.
+
+# Health monitoring - track HP and auto-heal when low
+Your health: (\d+)/(\d+) | health_monitor.lua | Track health and auto-heal
+
+# Planet scanning - track planet numbers and auto-land on target
+Planet (\d+) | planet_scan.lua | Track planets and auto-land
+
+# Location tracking - track current location and visit counts
+You are in (.+) | location_tracker.lua | Track location visits

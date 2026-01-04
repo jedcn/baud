@@ -1,0 +1,24 @@
+# Example Text Expansions
+# Format: shortcut=expansion text
+#
+# These shortcuts expand to full commands when you press Enter.
+# Expansions can also expand to /lua commands for scripting.
+
+# Simple command expansions
+tp=teleport
+inv=inventory
+scapl1=sca pl 1
+scapl2=sca pl 2
+
+# Lua command expansions - set target planet
+setplanet1=/lua setState("target_planet", 1)
+setplanet2=/lua setState("target_planet", 2)
+setplanet3=/lua setState("target_planet", 3)
+setplanet4=/lua setState("target_planet", 4)
+setplanet5=/lua setState("target_planet", 5)
+
+# Lua command to check current health state
+checkhp=/lua local hp = getState("hp_current"); local max = getState("hp_max"); if hp then send("Health: " .. hp .. "/" .. max) else send("No health data") end
+
+# Lua command to clear target planet
+clearplanet=/lua setState("target_planet", nil)
