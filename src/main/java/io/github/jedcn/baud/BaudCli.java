@@ -70,30 +70,27 @@ public class BaudCli implements Callable<Integer> {
             }
         }
 
-        // Initialize Lua if specified
-        StateManager stateManager = null;
-        LuaScriptEngine luaScriptEngine = null;
+        // Initialize Lua engine (always available for /lua commands)
+        StateManager stateManager = new StateManager();
+        LuaScriptEngine luaScriptEngine = new LuaScriptEngine(luaScriptsDir, stateManager);
 
-        if (luaScriptsDir != null || luaPatternsFile != null) {
-            stateManager = new StateManager();
-            luaScriptEngine = new LuaScriptEngine(luaScriptsDir, stateManager);
-
-            if (luaScriptsDir != null) {
-                try {
-                    luaScriptEngine.loadAllScripts();
-                    System.out.println("Loaded " + luaScriptEngine.getScriptCount() + " Lua scripts from " + luaScriptsDir);
-                } catch (Exception e) {
-                    System.err.println("Warning: Could not load Lua scripts: " + e.getMessage());
-                }
+        // Load scripts if directory specified
+        if (luaScriptsDir != null) {
+            try {
+                luaScriptEngine.loadAllScripts();
+                System.out.println("Loaded " + luaScriptEngine.getScriptCount() + " Lua scripts from " + luaScriptsDir);
+            } catch (Exception e) {
+                System.err.println("Warning: Could not load Lua scripts: " + e.getMessage());
             }
+        }
 
-            if (luaPatternsFile != null) {
-                try {
-                    stateManager.loadPatternsFromFile(luaPatternsFile);
-                    System.out.println("Loaded " + stateManager.getPatternCount() + " patterns from " + luaPatternsFile);
-                } catch (Exception e) {
-                    System.err.println("Warning: Could not load patterns file: " + e.getMessage());
-                }
+        // Load patterns if file specified
+        if (luaPatternsFile != null) {
+            try {
+                stateManager.loadPatternsFromFile(luaPatternsFile);
+                System.out.println("Loaded " + stateManager.getPatternCount() + " patterns from " + luaPatternsFile);
+            } catch (Exception e) {
+                System.err.println("Warning: Could not load patterns file: " + e.getMessage());
             }
         }
 
