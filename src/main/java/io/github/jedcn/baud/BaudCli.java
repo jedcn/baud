@@ -41,6 +41,18 @@ public class BaudCli implements Callable<Integer> {
     )
     private String expansionsFile;
 
+    @Option(
+        names = {"--lua-scripts"},
+        description = "Path to Lua scripts directory"
+    )
+    private String luaScriptsDir;
+
+    @Option(
+        names = {"--lua-patterns"},
+        description = "Path to patterns.txt file for Lua triggers"
+    )
+    private String luaPatternsFile;
+
     @Override
     public Integer call() throws Exception {
         System.out.println("Connecting to " + host + ":" + port + "...");
@@ -58,6 +70,33 @@ public class BaudCli implements Callable<Integer> {
             }
         }
 
+        // Initialize Lua if specified
+        StateManager stateManager = null;
+        LuaScriptEngine luaScriptEngine = null;
+
+        if (luaScriptsDir != null || luaPatternsFile != null) {
+            stateManager = new StateManager();
+            luaScriptEngine = new LuaScriptEngine(luaScriptsDir, stateManager);
+
+            if (luaScriptsDir != null) {
+                try {
+                    luaScriptEngine.loadAllScripts();
+                    System.out.println("Loaded " + luaScriptEngine.getScriptCount() + " Lua scripts from " + luaScriptsDir);
+                } catch (Exception e) {
+                    System.err.println("Warning: Could not load Lua scripts: " + e.getMessage());
+                }
+            }
+
+            if (luaPatternsFile != null) {
+                try {
+                    stateManager.loadPatternsFromFile(luaPatternsFile);
+                    System.out.println("Loaded " + stateManager.getPatternCount() + " patterns from " + luaPatternsFile);
+                } catch (Exception e) {
+                    System.err.println("Warning: Could not load patterns file: " + e.getMessage());
+                }
+            }
+        }
+
         try (TerminalHandler terminalHandler = new TerminalHandler();
              TelnetSession telnetSession = new TelnetSession()) {
 
@@ -66,7 +105,8 @@ public class BaudCli implements Callable<Integer> {
             System.out.println("Connected! Press Ctrl+] followed by 'quit' to disconnect.");
 
             // Start the session
-            SessionManager sessionManager = new SessionManager(terminalHandler, telnetSession, expansionManager);
+            SessionManager sessionManager = new SessionManager(terminalHandler, telnetSession,
+                                                              expansionManager, stateManager, luaScriptEngine);
             sessionManager.run();
 
             System.out.println("\nDisconnected from " + host);
