@@ -117,14 +117,12 @@ public class SessionManager {
                 }
 
                 if (ch == -2) {
-                    // EOF on terminal input
-                    if (DEBUG) System.err.println("[DEBUG] Terminal EOF detected, exiting");
-                    running = false;
-                    break;
+                    // Read timeout - continue to poll for auto-responses
+                    continue;
                 }
 
                 if (ch == -1) {
-                    // Read timeout - continue to poll for auto-responses
+                    // No data available, continue
                     continue;
                 }
 
