@@ -108,7 +108,8 @@ public class SessionManager {
                     }
                 }
 
-                int ch = terminalHandler.read(); // Blocking read
+                // Read with 100ms timeout to allow polling for auto-responses
+                int ch = terminalHandler.read(100);
 
                 if (DEBUG && readCount < 10) {
                     System.err.println("[DEBUG] Terminal read #" + readCount + ": ch=" + ch);
@@ -123,8 +124,7 @@ public class SessionManager {
                 }
 
                 if (ch == -1) {
-                    // This shouldn't happen with blocking read, but handle it
-                    if (DEBUG) System.err.println("[DEBUG] Terminal read returned -1, continuing");
+                    // Read timeout - continue to poll for auto-responses
                     continue;
                 }
 
