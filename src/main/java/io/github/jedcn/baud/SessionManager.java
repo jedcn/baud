@@ -12,6 +12,8 @@ public class SessionManager {
     private final TelnetSession telnetSession;
     private final LineEditor lineEditor;
     private final ExpansionManager expansionManager;
+    private final StateManager stateManager;
+    private final LuaScriptEngine luaScriptEngine;
     private volatile boolean running;
 
     // Escape sequence: Ctrl+] (ASCII 29)
@@ -20,14 +22,22 @@ public class SessionManager {
     private StringBuilder escapeCommand = new StringBuilder();
 
     public SessionManager(TerminalHandler terminalHandler, TelnetSession telnetSession) {
-        this(terminalHandler, telnetSession, null);
+        this(terminalHandler, telnetSession, null, null, null);
     }
 
     public SessionManager(TerminalHandler terminalHandler, TelnetSession telnetSession, ExpansionManager expansionManager) {
+        this(terminalHandler, telnetSession, expansionManager, null, null);
+    }
+
+    public SessionManager(TerminalHandler terminalHandler, TelnetSession telnetSession,
+                         ExpansionManager expansionManager, StateManager stateManager,
+                         LuaScriptEngine luaScriptEngine) {
         this.terminalHandler = terminalHandler;
         this.telnetSession = telnetSession;
         this.lineEditor = new LineEditor(terminalHandler);
         this.expansionManager = expansionManager;
+        this.stateManager = stateManager;
+        this.luaScriptEngine = luaScriptEngine;
         this.running = false;
     }
 
@@ -54,6 +64,13 @@ public class SessionManager {
                         break;
                     }
                     if (bytesRead > 0) {
+                        // Pattern matching for Lua triggers
+                        if (stateManager != null) {
+                            String text = new String(buffer, 0, bytesRead);
+                            stateManager.processText(text);
+                        }
+
+                        // Display to terminal
                         terminalHandler.write(buffer, 0, bytesRead);
                     }
                 }
@@ -76,7 +93,23 @@ public class SessionManager {
         try {
             int readCount = 0;
             while (running && telnetSession.isConnected()) {
-                int ch = terminalHandler.read(); // Blocking read
+                // Poll for auto-responses from Lua scripts
+                if (stateManager != null) {
+                    String autoResponse = stateManager.pollAutoResponse();
+                    if (autoResponse != null) {
+                        telnetOutput.write(autoResponse.getBytes());
+                        telnetOutput.write('\r');
+                        telnetOutput.write('\n');
+                        telnetOutput.flush();
+
+                        if (DEBUG) {
+                            System.err.println("[DEBUG] Sent auto-response: " + autoResponse);
+                        }
+                    }
+                }
+
+                // Read with 100ms timeout to allow polling for auto-responses
+                int ch = terminalHandler.read(100);
 
                 if (DEBUG && readCount < 10) {
                     System.err.println("[DEBUG] Terminal read #" + readCount + ": ch=" + ch);
@@ -84,15 +117,12 @@ public class SessionManager {
                 }
 
                 if (ch == -2) {
-                    // EOF on terminal input
-                    if (DEBUG) System.err.println("[DEBUG] Terminal EOF detected, exiting");
-                    running = false;
-                    break;
+                    // Read timeout - continue to poll for auto-responses
+                    continue;
                 }
 
                 if (ch == -1) {
-                    // This shouldn't happen with blocking read, but handle it
-                    if (DEBUG) System.err.println("[DEBUG] Terminal read returned -1, continuing");
+                    // No data available, continue
                     continue;
                 }
 
@@ -147,6 +177,26 @@ public class SessionManager {
                                 System.err.println("[DEBUG] Applied expansion: '" + trimmed + "' -> '" + expanded + "'");
                             }
                         }
+                    }
+
+                    // Detect /lua commands (after expansion)
+                    if (stateManager != null && luaScriptEngine != null && line.trim().startsWith("/lua ")) {
+                        String luaCode = line.trim().substring(5);
+                        try {
+                            luaScriptEngine.executeLuaCode(luaCode);
+                            if (DEBUG) {
+                                System.err.println("[DEBUG] Executed Lua command: " + luaCode);
+                            }
+                        } catch (Exception e) {
+                            String errorMsg = "Lua error: " + e.getMessage() + "\r\n";
+                            terminalHandler.write(errorMsg.getBytes());
+                            if (DEBUG) {
+                                System.err.println("[DEBUG] Lua command error: " + e.getMessage());
+                            }
+                        }
+                        // Reset line editor for next line
+                        lineEditor.reset();
+                        continue; // Don't send to BBS
                     }
 
                     telnetOutput.write(line.getBytes());

@@ -7,6 +7,9 @@ A Java CLI application for connecting to Bulletin Board Systems (BBS) via telnet
 - **Telnet Protocol**: Full telnet support using Apache Commons Net
 - **ANSI Graphics**: Faithful rendering of ANSI escape codes, colors, and ASCII art
 - **Line Editing**: Local line editing with cursor movement, backspace, forward delete, and kill commands
+- **Text Expansions**: Define shortcuts that expand to longer commands
+- **Lua Scripting**: Embedded Lua engine with state management and automation
+- **Pattern-Based Triggers**: Execute Lua scripts automatically when BBS output matches patterns
 - **Raw Terminal Mode**: Character-by-character I/O for responsive BBS interaction
 - **Cross-Platform**: Works on Windows, macOS, and Linux via JLine
 - **Simple Interface**: Easy command-line usage
@@ -120,6 +123,143 @@ DEBUG=true baud bbs.example.com
 
 This will print additional diagnostic information during the session, useful for troubleshooting connection issues or character encoding problems.
 
+## Advanced Features
+
+### Text Expansions
+
+Baud supports text expansions that allow you to define shortcuts that expand to longer commands when you press Enter:
+
+```bash
+baud bbs.example.com --expansions expansions.txt
+```
+
+**Expansions File Format:**
+
+```
+# Comments start with #
+shortcut=expansion text
+
+# Examples:
+tp=teleport
+inv=inventory
+scapl1=sca pl 1
+```
+
+When you type `tp` and press Enter, it will expand to `teleport` and be sent to the BBS.
+
+### Lua Scripting
+
+Baud includes a powerful Lua scripting engine that enables:
+- **Interactive Lua Commands**: Execute Lua code with `/lua` prefix
+- **State Management**: Store and retrieve variables across your session
+- **Automated Responses**: Scripts can automatically send commands to the BBS
+- **Pattern-Based Triggers**: Execute scripts when BBS output matches patterns
+
+#### Interactive Lua Commands
+
+Use `/lua` prefix to execute Lua code interactively:
+
+```bash
+baud bbs.example.com
+
+# In the BBS session:
+/lua setState("target_planet", 5)
+/lua local hp = getState("hp_current")
+/lua send("scan")
+```
+
+**Available Lua Functions:**
+- `setState(key, value)` - Store a state variable
+- `getState(key)` - Retrieve a state variable
+- `send(text)` - Queue a command to send to the BBS
+
+#### Text Expansions with Lua
+
+Expansions can expand to `/lua` commands for powerful shortcuts:
+
+```
+# expansions.txt
+setplanet1=/lua setState("target_planet", 1)
+setplanet2=/lua setState("target_planet", 2)
+checkhp=/lua local hp = getState("hp_current"); send("HP: " .. hp)
+```
+
+#### Pattern-Based Automation
+
+Load Lua scripts that automatically execute when BBS output matches regex patterns:
+
+```bash
+baud bbs.example.com --lua-scripts ./scripts --lua-patterns patterns.txt
+```
+
+**Patterns File Format** (patterns.txt):
+
+```
+# REGEX_PATTERN | script_name.lua | COMMENT
+Your health: (\d+)/(\d+) | health_monitor.lua | Track HP
+Planet (\d+) | planet_scan.lua | Track planets
+```
+
+**Example Lua Script** (health_monitor.lua):
+
+```lua
+-- Capture groups available in match[1], match[2], etc.
+local current_hp = tonumber(match[1])
+local max_hp = tonumber(match[2])
+
+setState("hp_current", current_hp)
+setState("hp_max", max_hp)
+
+-- Auto-heal if health is low
+if current_hp / max_hp < 0.3 then
+    send("use healing potion")
+end
+```
+
+**Example Lua Script** (planet_scan.lua):
+
+```lua
+local planet_num = tonumber(match[1])
+setState("last_planet", planet_num)
+
+local target = getState("target_planet")
+if target and planet_num == target then
+    send("land")
+end
+```
+
+#### State Sharing Between Scripts
+
+All Lua scripts share the same state, enabling coordination:
+
+```lua
+-- Script 1 sets a value
+setState("target_planet", 5)
+
+-- Script 2 can read that value
+local target = getState("target_planet")
+if target == 5 then
+    send("warp to planet 5")
+end
+```
+
+#### Example Usage
+
+```bash
+# Start with all features enabled
+baud bbs.example.com \
+  --expansions examples/expansions.txt \
+  --lua-scripts examples/lua-scripts \
+  --lua-patterns examples/patterns.txt
+
+# In the session:
+setplanet5              # Expands to /lua setState("target_planet", 5)
+scan                    # BBS responds with planet data
+                        # planet_scan.lua triggers, sees planet 5, auto-lands
+```
+
+See the `examples/` directory for complete working examples.
+
 ## Controls
 
 ### Line Editing
@@ -150,18 +290,21 @@ Baud supports local line editing with cursor movement and editing commands:
 
 ### Architecture
 
-The application consists of four main components:
+The application consists of six main components:
 
 1. **BaudCli** - Main entry point using Picocli for command-line parsing
 2. **TelnetSession** - Manages telnet connection using Apache Commons Net
 3. **TerminalHandler** - Handles terminal I/O with JLine for ANSI support
 4. **SessionManager** - Coordinates bidirectional I/O between terminal and BBS
+5. **StateManager** - Manages state variables and pattern-based Lua triggers
+6. **LuaScriptEngine** - Executes Lua scripts with state management API
 
 ### Dependencies
 
 - **Picocli 4.7.5** - Modern CLI framework with ANSI support
 - **Apache Commons Net 3.11.1** - Telnet client implementation
 - **JLine 3.26.3** - Terminal handling with ANSI escape code support
+- **LuaJ 3.0.1** - Embedded Lua scripting engine
 
 ### Terminal Emulation
 
