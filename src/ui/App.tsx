@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Box } from 'ink';
 import { StatusBar } from './StatusBar.js';
 import { OutputArea } from './OutputArea.js';
@@ -67,6 +67,16 @@ export function App({ profile }: AppProps) {
       };
     }
   }, [profile]);
+
+  // Auto-exit when connection is closed
+  const previousStatus = useRef(state.connection.status);
+  useEffect(() => {
+    // Exit if we transition from 'connected' to 'disconnected'
+    if (previousStatus.current === 'connected' && state.connection.status === 'disconnected') {
+      process.exit(0);
+    }
+    previousStatus.current = state.connection.status;
+  }, [state.connection.status]);
 
   const handleSubmit = (text: string) => {
     if (state.connection.currentConnection) {
