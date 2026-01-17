@@ -13,6 +13,7 @@ export interface UseLineEditorResult {
   moveHome: () => void;
   moveEnd: () => void;
   clear: () => void;
+  killToEnd: () => void;
 }
 
 export function useLineEditor(initialValue = ''): UseLineEditorResult {
@@ -70,6 +71,10 @@ export function useLineEditor(initialValue = ''): UseLineEditorResult {
     setCursor(0);
   }, []);
 
+  const killToEnd = useCallback(() => {
+    setText((prev) => prev.slice(0, cursor));
+  }, [cursor]);
+
   return {
     text,
     cursor,
@@ -83,5 +88,6 @@ export function useLineEditor(initialValue = ''): UseLineEditorResult {
     moveHome,
     moveEnd,
     clear,
+    killToEnd,
   };
 }

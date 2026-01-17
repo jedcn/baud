@@ -58,6 +58,18 @@ export function InputArea({ onSubmit }: InputAreaProps) {
       return;
     }
 
+    // CTRL-B - move cursor left (same as Left arrow)
+    if (key.ctrl && inputChar === 'b') {
+      editor.moveLeft();
+      return;
+    }
+
+    // CTRL-F - move cursor right (same as Right arrow)
+    if (key.ctrl && inputChar === 'f') {
+      editor.moveRight();
+      return;
+    }
+
     // CTRL-A - move to beginning of line
     if (key.ctrl && inputChar === 'a') {
       editor.moveHome();
@@ -70,10 +82,15 @@ export function InputArea({ onSubmit }: InputAreaProps) {
       return;
     }
 
-    // CTRL-U - clear line
-    if (key.ctrl && inputChar === 'u') {
-      editor.clear();
-      history.resetPosition();
+    // CTRL-K - kill from cursor to end of line
+    if (key.ctrl && inputChar === 'k') {
+      editor.killToEnd();
+      return;
+    }
+
+    // CTRL-D - delete character at cursor (forward delete)
+    if (key.ctrl && inputChar === 'd') {
+      editor.deleteChar();
       return;
     }
 
