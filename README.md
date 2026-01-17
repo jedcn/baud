@@ -41,6 +41,10 @@ bun install
 
 ### Connect to a Server
 
+You can connect directly using `--host` and `--port`, or save connection profiles for reuse.
+
+#### Direct Connection
+
 ```bash
 bun run src/main.tsx --host <hostname> --port <port>
 ```
@@ -51,8 +55,20 @@ Example:
 # Connect to a local MUD on port 4000
 bun run src/main.tsx --host localhost --port 4000
 
-# Connect to a public MUD
-bun run src/main.tsx --host aardmud.org --port 23
+# Connect to a public BBS
+bun run src/main.tsx --host bbs.fozztexx.com --port 23
+```
+
+#### Using Saved Profiles
+
+Save a connection as a profile for easy reuse:
+
+```bash
+# Save a profile while connecting
+bun run src/main.tsx --host bbs.example.com --port 23 --save-profile mybbs
+
+# Connect using the saved profile
+bun run src/main.tsx --profile mybbs
 ```
 
 ### Help
@@ -60,6 +76,51 @@ bun run src/main.tsx --host aardmud.org --port 23
 ```bash
 bun run src/main.tsx --help
 ```
+
+## Configuration
+
+Configuration files are stored in platform-specific directories:
+
+- **macOS**: `~/Library/Application Support/baud/`
+- **Linux**: `~/.config/baud/`
+- **Windows**: `%APPDATA%/baud/`
+
+### Connection Profiles
+
+Profiles are saved in `profiles.json` and can be created in two ways:
+
+1. **Using the `--save-profile` flag** (recommended):
+   ```bash
+   bun run src/main.tsx --host aardmud.org --port 23 --save-profile aardmud
+   ```
+
+2. **Manually editing `profiles.json`**:
+   ```json
+   {
+     "profiles": [
+       {
+         "id": "aardmud",
+         "name": "Aardwolf MUD",
+         "protocol": "telnet",
+         "host": "aardmud.org",
+         "port": 23
+       }
+     ]
+   }
+   ```
+
+### Profile Options
+
+Each profile supports the following fields:
+
+- `id` (required) - Unique identifier for the profile
+- `name` (required) - Display name for the profile
+- `protocol` (required) - Either `"telnet"` or `"ssh"`
+- `host` (required) - Server hostname or IP address
+- `port` (required) - Server port number
+- `username` (optional) - Username for SSH connections
+- `password` (optional) - Password for SSH connections
+- `privateKey` (optional) - Path to SSH private key file
 
 ## Development
 
@@ -113,32 +174,52 @@ bun test --coverage
 ## Current Status
 
 **Phase 1 Complete** - Basic connectivity and output
-
 - ✅ Project scaffolding (package.json, tsconfig.json, bunfig.toml)
 - ✅ Basic Ink UI (StatusBar, OutputArea, InputArea, App)
 - ✅ Telnet connection support
 - ✅ State management with React Context
 - ✅ CLI argument parsing
 
+**Phase 2 Complete** - Enhanced Input/Output
+- ✅ Command history with up/down arrows and CTRL-P/CTRL-N
+- ✅ Line editing (arrow keys, CTRL-A/E/B/F/K/D/U)
+- ✅ ANSI color parsing (256-color support)
+- ✅ CP437 character encoding for BBS compatibility
+- ✅ Auto-exit on disconnect
+
+**Phase 3 Complete** - Configuration System
+- ✅ Platform-specific config directories
+- ✅ Persistent connection profiles
+- ✅ JSON configuration with Zod validation
+- ✅ Profile management (save, load, list)
+
 ### Upcoming Features
 
-**Phase 2** - Enhanced Input/Output
-- Command history (up/down arrows)
-- Line editing (left/right, CTRL-A, CTRL-E)
-- ANSI color parsing and rendering
+**Phase 4** - Lua Scripting Foundation
+- Load and execute Lua scripts
+- Basic Lua API (send, echo)
+- `/lua` command for interactive execution
 
-**Phase 3** - Configuration System
-- Persistent connection profiles
-- JSON configuration files
-- Profile management
-
-**Phase 4+** - Lua Scripting, Triggers, Aliases, Timers, SSH, and more
+**Phase 5+** - Triggers, Aliases, Timers, SSH, Dynamic UI, and more
 
 ## Controls
 
+### Basic Input
 - **Type and press Enter** - Send command to server
-- **Backspace** - Delete character
+- **Backspace** - Delete character before cursor
 - **CTRL-C** - Exit
+
+### Command History
+- **Up Arrow / CTRL-P** - Navigate to previous command
+- **Down Arrow / CTRL-N** - Navigate to next command
+
+### Line Editing
+- **Left Arrow / CTRL-B** - Move cursor left
+- **Right Arrow / CTRL-F** - Move cursor right
+- **CTRL-A** - Move to beginning of line
+- **CTRL-E** - Move to end of line
+- **CTRL-K** - Delete from cursor to end of line
+- **CTRL-D** - Delete character at cursor (forward delete)
 
 ## License
 
