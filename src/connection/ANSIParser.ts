@@ -9,43 +9,44 @@ interface StyleState {
   underline?: boolean;
 }
 
-// ANSI color codes to Ink color names
+// ANSI color codes to hex colors (traditional terminal palette)
+// Using xterm-256color palette for consistency with classic terminals
 const ANSI_COLORS: Record<number, string> = {
-  30: 'black',
-  31: 'red',
-  32: 'green',
-  33: 'yellow',
-  34: 'blue',
-  35: 'magenta',
-  36: 'cyan',
-  37: 'white',
-  90: 'gray',
-  91: 'redBright',
-  92: 'greenBright',
-  93: 'yellowBright',
-  94: 'blueBright',
-  95: 'magentaBright',
-  96: 'cyanBright',
-  97: 'whiteBright',
+  30: '#000000',  // Black
+  31: '#cd0000',  // Red
+  32: '#00cd00',  // Green
+  33: '#cdcd00',  // Yellow (brown/orange in many terminals)
+  34: '#0000ee',  // Blue
+  35: '#cd00cd',  // Magenta
+  36: '#00cdcd',  // Cyan
+  37: '#e5e5e5',  // White (light gray)
+  90: '#7f7f7f',  // Bright Black (dark gray)
+  91: '#ff0000',  // Bright Red
+  92: '#00ff00',  // Bright Green
+  93: '#ffff00',  // Bright Yellow
+  94: '#5c5cff',  // Bright Blue
+  95: '#ff00ff',  // Bright Magenta
+  96: '#00ffff',  // Bright Cyan
+  97: '#ffffff',  // Bright White
 };
 
 const ANSI_BG_COLORS: Record<number, string> = {
-  40: 'black',
-  41: 'red',
-  42: 'green',
-  43: 'yellow',
-  44: 'blue',
-  45: 'magenta',
-  46: 'cyan',
-  47: 'white',
-  100: 'gray',
-  101: 'redBright',
-  102: 'greenBright',
-  103: 'yellowBright',
-  104: 'blueBright',
-  105: 'magentaBright',
-  106: 'cyanBright',
-  107: 'whiteBright',
+  40: '#000000',  // Black
+  41: '#cd0000',  // Red
+  42: '#00cd00',  // Green
+  43: '#cdcd00',  // Yellow (brown/orange)
+  44: '#0000ee',  // Blue
+  45: '#cd00cd',  // Magenta
+  46: '#00cdcd',  // Cyan
+  47: '#e5e5e5',  // White (light gray)
+  100: '#7f7f7f', // Bright Black (dark gray)
+  101: '#ff0000', // Bright Red
+  102: '#00ff00', // Bright Green
+  103: '#ffff00', // Bright Yellow
+  104: '#5c5cff', // Bright Blue
+  105: '#ff00ff', // Bright Magenta
+  106: '#00ffff', // Bright Cyan
+  107: '#ffffff', // Bright White
 };
 
 // Convert 256-color palette index to hex color
