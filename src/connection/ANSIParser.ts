@@ -30,22 +30,22 @@ const ANSI_COLORS: Record<number, string> = {
 };
 
 const ANSI_BG_COLORS: Record<number, string> = {
-  40: 'bgBlack',
-  41: 'bgRed',
-  42: 'bgGreen',
-  43: 'bgYellow',
-  44: 'bgBlue',
-  45: 'bgMagenta',
-  46: 'bgCyan',
-  47: 'bgWhite',
-  100: 'bgGray',
-  101: 'bgRedBright',
-  102: 'bgGreenBright',
-  103: 'bgYellowBright',
-  104: 'bgBlueBright',
-  105: 'bgMagentaBright',
-  106: 'bgCyanBright',
-  107: 'bgWhiteBright',
+  40: 'black',
+  41: 'red',
+  42: 'green',
+  43: 'yellow',
+  44: 'blue',
+  45: 'magenta',
+  46: 'cyan',
+  47: 'white',
+  100: 'gray',
+  101: 'redBright',
+  102: 'greenBright',
+  103: 'yellowBright',
+  104: 'blueBright',
+  105: 'magentaBright',
+  106: 'cyanBright',
+  107: 'whiteBright',
 };
 
 export class ANSIParser {
