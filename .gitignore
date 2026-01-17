@@ -20,8 +20,10 @@ coverage/
 .DS_Store
 Thumbs.db
 
-# User configuration (should be user-specific)
-config/
+# User configuration files (runtime configs, not source code)
+# Note: src/config/ contains source code and should be tracked
+/config/
+*.json.user
 
 # Logs
 *.log
