@@ -34,6 +34,18 @@ export function InputArea({ onSubmit }: InputAreaProps) {
       return;
     }
 
+    // CTRL-P - navigate history backward (same as Up arrow)
+    if (key.ctrl && inputChar === 'p') {
+      history.navigateUp();
+      return;
+    }
+
+    // CTRL-N - navigate history forward (same as Down arrow)
+    if (key.ctrl && inputChar === 'n') {
+      history.navigateDown();
+      return;
+    }
+
     // Left arrow - move cursor left
     if (key.leftArrow) {
       editor.moveLeft();
