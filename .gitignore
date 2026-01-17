@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+bun.lockb
+
+# Build output
+dist/
+*.exe
+
+# Test coverage
+coverage/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# User configuration (should be user-specific)
+config/
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local

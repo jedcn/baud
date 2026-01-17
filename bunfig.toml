@@ -1,0 +1,8 @@
+[install]
+# Lock file for reproducible builds
+lockfile = true
+
+[test]
+# Use built-in Bun test runner
+preload = ["./tests/setup.ts"]
+coverage = true

@@ -1,0 +1,36 @@
+{
+  "name": "baud",
+  "version": "0.1.0",
+  "description": "Terminal-based MUD/BBS client with Lua scripting support",
+  "author": "Jed Northridge",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "baud": "./dist/baud"
+  },
+  "scripts": {
+    "dev": "bun run src/main.tsx",
+    "build": "bun build src/main.tsx --compile --outfile dist/baud",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage",
+    "lint": "bunx @biomejs/biome check src/",
+    "format": "bunx @biomejs/biome format --write src/"
+  },
+  "dependencies": {
+    "ink": "^5.0.1",
+    "react": "^19.0.0",
+    "wasmoon": "^1.16.0",
+    "telnet-client": "^2.2.2",
+    "ssh2": "^1.16.0",
+    "ansi-styles": "^6.2.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.8",
+    "@types/ssh2": "^1.15.1",
+    "@biomejs/biome": "^1.9.4",
+    "bun-types": "latest",
+    "ink-testing-library": "^4.0.0"
+  }
+}
