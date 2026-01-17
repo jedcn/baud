@@ -1,5 +1,6 @@
 import { Telnet } from 'telnet-client';
 import { ConnectionManager } from './ConnectionManager.js';
+import { decodeCP437 } from '../utils/cp437.js';
 import type { ConnectionProfile } from '../state/AppState.js';
 
 export class TelnetConnection extends ConnectionManager {
@@ -17,7 +18,7 @@ export class TelnetConnection extends ConnectionManager {
 
     try {
       this.client.on('data', (buffer: Buffer) => {
-        const text = buffer.toString('utf8');
+        const text = decodeCP437(buffer);
         this.emitData(text);
       });
 

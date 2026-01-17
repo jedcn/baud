@@ -2,8 +2,19 @@ import type { ConnectionManager } from '../connection/ConnectionManager.js';
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
-export interface OutputLine {
+export interface TextSegment {
   text: string;
+  color?: string;
+  backgroundColor?: string;
+  bold?: boolean;
+  dim?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+}
+
+export interface OutputLine {
+  text: string; // Plain text (ANSI codes stripped)
+  segments: TextSegment[]; // Styled text segments
   timestamp: Date;
 }
 
@@ -35,7 +46,7 @@ export type AppAction =
   | { type: 'CONNECTION_STATUS_CHANGED'; status: ConnectionStatus; error?: string }
   | { type: 'CONNECTION_ESTABLISHED'; connection: ConnectionManager; profile: ConnectionProfile }
   | { type: 'CONNECTION_CLOSED' }
-  | { type: 'OUTPUT_LINE_RECEIVED'; line: string }
+  | { type: 'OUTPUT_LINE_RECEIVED'; line: string; segments: TextSegment[] }
   | { type: 'CLEAR_OUTPUT' };
 
 export const initialState: AppState = {
@@ -81,6 +92,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     case 'OUTPUT_LINE_RECEIVED': {
       const newLine: OutputLine = {
         text: action.line,
+        segments: action.segments,
         timestamp: new Date(),
       };
 
