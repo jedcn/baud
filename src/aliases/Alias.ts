@@ -57,8 +57,21 @@ export class Alias {
   /**
    * Execute the alias callback
    * @param captures - Captured groups from regex match
+   * @param onError - Optional error handler for Lua errors
    */
-  async execute(captures?: string[]): Promise<void> {
-    await this.callback(captures);
+  async execute(
+    captures?: string[],
+    onError?: (error: Error) => void
+  ): Promise<void> {
+    try {
+      await this.callback(captures);
+    } catch (error) {
+      if (onError && error instanceof Error) {
+        onError(error);
+      } else {
+        // Re-throw if no error handler provided
+        throw error;
+      }
+    }
   }
 }

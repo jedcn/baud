@@ -217,4 +217,38 @@ describe('Triggers', () => {
 
     expect(echoedMessages).toContain('Poison detected!');
   });
+
+  test('lua error in trigger callback is handled gracefully', async () => {
+    const errors: string[] = [];
+    const errorHandler = (error: Error) => {
+      errors.push(error.message);
+    };
+
+    await luaEngine.execute(`
+      createTrigger("test", function(matches)
+        -- This will error
+        local x = matches + 1
+      end)
+    `);
+
+    await triggerManager.processLine('test', errorHandler);
+
+    // Error should be caught and passed to handler
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('attempt');
+  });
+
+  test('accessing non-existent capture group in trigger returns nil not error', async () => {
+    await luaEngine.execute(`
+      createTrigger("test", function(matches)
+        -- matches is now always a table (even if empty)
+        local value = matches[1] or "no match"
+        echo("Value: " .. value)
+      end)
+    `);
+
+    await triggerManager.processLine('test');
+
+    expect(echoedMessages).toContain('Value: no match');
+  });
 });

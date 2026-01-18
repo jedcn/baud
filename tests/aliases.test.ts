@@ -171,4 +171,43 @@ describe('Aliases', () => {
     expect(matched).toBe(true);
     expect(sentCommands).toEqual(['first alias']);
   });
+
+  test('lua error in alias callback is handled gracefully', async () => {
+    const errors: string[] = [];
+    const errorHandler = (error: Error) => {
+      errors.push(error.message);
+    };
+
+    await luaEngine.execute(`
+      createAlias("test", function(matches)
+        -- This will error because matches is an empty table, not nil
+        -- but trying to do math on it will fail
+        local x = matches + 1
+      end)
+    `);
+
+    const matched = await aliasManager.processInput('test', errorHandler);
+
+    // Alias should match
+    expect(matched).toBe(true);
+    // Error should be caught and passed to handler
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('attempt');
+  });
+
+  test('accessing non-existent capture group returns nil not error', async () => {
+    await luaEngine.execute(`
+      createAlias("test", function(matches)
+        -- matches is now always a table (even if empty)
+        -- accessing non-existent index returns nil, which is fine
+        local name = matches[1] or "default"
+        send("Hello, " .. name)
+      end)
+    `);
+
+    const matched = await aliasManager.processInput('test');
+
+    expect(matched).toBe(true);
+    expect(sentCommands).toContain('Hello, default');
+  });
 });

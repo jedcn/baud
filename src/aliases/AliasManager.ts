@@ -70,19 +70,22 @@ export class AliasManager {
    * @param text - User input to process
    * @returns True if an alias matched and was executed (input should be consumed)
    */
-  async processInput(text: string): Promise<boolean> {
+  async processInput(
+    text: string,
+    onError?: (error: Error) => void
+  ): Promise<boolean> {
     for (const alias of this.aliases) {
       const result = alias.match(text);
 
       if (result.matched) {
-        // Convert captures to Lua table if we have a Lua engine
-        let captures = result.captures;
-        if (captures && this.luaEngine) {
+        // Always convert to Lua table (even if empty) if we have a Lua engine
+        let captures = result.captures || [];
+        if (this.luaEngine) {
           captures = this.luaEngine.arrayToLuaTable(captures) as any;
         }
 
-        // Execute the alias callback
-        await alias.execute(captures);
+        // Execute the alias callback with error handling
+        await alias.execute(captures, onError);
         return true; // Input was consumed by alias
       }
     }

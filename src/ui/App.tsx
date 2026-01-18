@@ -25,6 +25,16 @@ export function App({ profile, scripts = [] }: AppProps) {
   const triggerManager = useMemo(() => new TriggerManager(), []);
   const aliasManager = useMemo(() => new AliasManager(), []);
 
+  // Error handler for Lua script errors
+  const handleLuaError = (error: Error) => {
+    const errorMessage = `Lua error: ${error.message}`;
+    dispatch({
+      type: 'OUTPUT_LINE_RECEIVED',
+      line: errorMessage,
+      segments: [{ text: errorMessage, color: '#ff0000' }],
+    });
+  };
+
   useEffect(() => {
     if (profile && !state.connection.currentConnection) {
       const connection = new TelnetConnection();
@@ -37,8 +47,11 @@ export function App({ profile, scripts = [] }: AppProps) {
             const segments = ansiParser.parse(line);
             const plainText = ansiParser.strip(line);
 
-            // Process triggers
-            const shouldGag = await triggerManager.processLine(plainText);
+            // Process triggers with error handling
+            const shouldGag = await triggerManager.processLine(
+              plainText,
+              handleLuaError
+            );
 
             // Only display if not gagged
             if (!shouldGag) {
@@ -192,8 +205,8 @@ export function App({ profile, scripts = [] }: AppProps) {
       return;
     }
 
-    // Process aliases
-    const aliasMatched = await aliasManager.processInput(text);
+    // Process aliases with error handling
+    const aliasMatched = await aliasManager.processInput(text, handleLuaError);
     if (aliasMatched) {
       // Alias consumed the input
       return;
