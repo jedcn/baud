@@ -1,16 +1,7 @@
 import { Trigger, TriggerCallback, TriggerOptions } from './Trigger.js';
-import type { LuaEngine } from '../scripting/LuaEngine.js';
 
 export class TriggerManager {
   private triggers: Trigger[] = [];
-  private luaEngine?: LuaEngine;
-
-  /**
-   * Set the Lua engine (for converting arrays to Lua tables)
-   */
-  setLuaEngine(engine: LuaEngine): void {
-    this.luaEngine = engine;
-  }
 
   /**
    * Create a new trigger
@@ -84,14 +75,8 @@ export class TriggerManager {
     for (const trigger of this.triggers) {
       const result = trigger.match(text);
       if (result.matched) {
-        // Always convert to Lua table (even if empty) if we have a Lua engine
-        let captures = result.captures || [];
-        if (this.luaEngine) {
-          captures = this.luaEngine.arrayToLuaTable(captures) as any;
-        }
-
         // Execute the trigger callback with error handling
-        await trigger.execute(captures, onError);
+        await trigger.execute(result.captures || [], onError);
 
         // If this trigger has gag enabled, mark the line to be hidden
         if (trigger.gag) {

@@ -127,10 +127,6 @@ export function App({ profile, scripts = [] }: AppProps) {
       await engine.initialize();
       setLuaEngine(engine);
 
-      // Pass the engine to trigger and alias managers so they can convert arrays to Lua tables
-      triggerManager.setLuaEngine(engine);
-      aliasManager.setLuaEngine(engine);
-
       // Load scripts if provided
       if (scripts.length > 0) {
         const loader = new ScriptLoader(engine);
