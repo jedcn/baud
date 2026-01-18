@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Box } from 'ink';
 import { StatusBar } from './StatusBar.js';
 import { OutputArea } from './OutputArea.js';
@@ -6,15 +6,20 @@ import { InputArea } from './InputArea.js';
 import { useAppState } from '../state/StateContext.js';
 import { TelnetConnection } from '../connection/TelnetConnection.js';
 import { ANSIParser } from '../connection/ANSIParser.js';
+import { LuaEngine } from '../scripting/LuaEngine.js';
+import { ScriptLoader } from '../scripting/ScriptLoader.js';
 import type { ConnectionProfile } from '../state/AppState.js';
 
 interface AppProps {
   profile?: ConnectionProfile;
+  scripts?: string[];
 }
 
-export function App({ profile }: AppProps) {
+export function App({ profile, scripts = [] }: AppProps) {
   const { state, dispatch } = useAppState();
   const ansiParser = useMemo(() => new ANSIParser(), []);
+  const [luaEngine, setLuaEngine] = useState<LuaEngine | null>(null);
+  const connectionRef = useRef(state.connection.currentConnection);
 
   useEffect(() => {
     if (profile && !state.connection.currentConnection) {
@@ -68,6 +73,63 @@ export function App({ profile }: AppProps) {
     }
   }, [profile]);
 
+  // Keep connection ref up to date
+  useEffect(() => {
+    connectionRef.current = state.connection.currentConnection;
+  }, [state.connection.currentConnection]);
+
+  // Initialize Lua engine and load scripts
+  useEffect(() => {
+    const initLua = async () => {
+      const engine = new LuaEngine({
+        send: (text: string) => {
+          if (connectionRef.current) {
+            connectionRef.current.send(text);
+          }
+        },
+        echo: (text: string) => {
+          // Display Lua output in the output area
+          const segments = [{ text }];
+          dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: text, segments });
+        },
+      });
+
+      await engine.initialize();
+      setLuaEngine(engine);
+
+      // Load scripts if provided
+      if (scripts.length > 0) {
+        const loader = new ScriptLoader(engine);
+        const results = await loader.loadScripts(scripts);
+
+        // Report script loading results
+        for (const result of results) {
+          if (result.success) {
+            dispatch({
+              type: 'OUTPUT_LINE_RECEIVED',
+              line: `Loaded script: ${result.path}`,
+              segments: [{ text: `Loaded script: ${result.path}`, color: '#00ff00' }],
+            });
+          } else {
+            dispatch({
+              type: 'OUTPUT_LINE_RECEIVED',
+              line: `Script error: ${result.error}`,
+              segments: [{ text: `Script error: ${result.error}`, color: '#ff0000' }],
+            });
+          }
+        }
+      }
+    };
+
+    initLua();
+
+    return () => {
+      if (luaEngine) {
+        luaEngine.cleanup();
+      }
+    };
+  }, [scripts]);
+
   // Auto-exit when connection is closed
   const previousStatus = useRef(state.connection.status);
   useEffect(() => {
@@ -78,7 +140,38 @@ export function App({ profile }: AppProps) {
     previousStatus.current = state.connection.status;
   }, [state.connection.status]);
 
-  const handleSubmit = (text: string) => {
+  const handleSubmit = async (text: string) => {
+    // Handle /lua commands
+    if (text.startsWith('/lua ')) {
+      const luaCode = text.slice(5); // Remove "/lua " prefix
+      if (luaEngine) {
+        const result = await luaEngine.execute(luaCode);
+        if (!result.success) {
+          dispatch({
+            type: 'OUTPUT_LINE_RECEIVED',
+            line: `Lua error: ${result.error}`,
+            segments: [{ text: `Lua error: ${result.error}`, color: '#ff0000' }],
+          });
+        } else if (result.result !== undefined && result.result !== null) {
+          // Display the result if there is one
+          const resultText = String(result.result);
+          dispatch({
+            type: 'OUTPUT_LINE_RECEIVED',
+            line: resultText,
+            segments: [{ text: resultText, color: '#ffff00' }],
+          });
+        }
+      } else {
+        dispatch({
+          type: 'OUTPUT_LINE_RECEIVED',
+          line: 'Lua engine not initialized',
+          segments: [{ text: 'Lua engine not initialized', color: '#ff0000' }],
+        });
+      }
+      return;
+    }
+
+    // Normal command - send to server
     if (state.connection.currentConnection) {
       state.connection.currentConnection.send(text);
     }
