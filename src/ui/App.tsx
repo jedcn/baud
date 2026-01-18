@@ -8,6 +8,8 @@ import { TelnetConnection } from '../connection/TelnetConnection.js';
 import { ANSIParser } from '../connection/ANSIParser.js';
 import { LuaEngine } from '../scripting/LuaEngine.js';
 import { ScriptLoader } from '../scripting/ScriptLoader.js';
+import { TriggerManager } from '../triggers/TriggerManager.js';
+import { AliasManager } from '../aliases/AliasManager.js';
 import type { ConnectionProfile } from '../state/AppState.js';
 
 interface AppProps {
@@ -20,19 +22,28 @@ export function App({ profile, scripts = [] }: AppProps) {
   const ansiParser = useMemo(() => new ANSIParser(), []);
   const [luaEngine, setLuaEngine] = useState<LuaEngine | null>(null);
   const connectionRef = useRef(state.connection.currentConnection);
+  const triggerManager = useMemo(() => new TriggerManager(), []);
+  const aliasManager = useMemo(() => new AliasManager(), []);
 
   useEffect(() => {
     if (profile && !state.connection.currentConnection) {
       const connection = new TelnetConnection();
 
-      connection.on('data', (data: string) => {
+      connection.on('data', async (data: string) => {
         // Split by newlines and emit each line separately
         const lines = data.split(/\r?\n/);
         for (const line of lines) {
           if (line.trim().length > 0) {
             const segments = ansiParser.parse(line);
             const plainText = ansiParser.strip(line);
-            dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: plainText, segments });
+
+            // Process triggers
+            const shouldGag = await triggerManager.processLine(plainText);
+
+            // Only display if not gagged
+            if (!shouldGag) {
+              dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: plainText, segments });
+            }
           }
         }
       });
@@ -91,6 +102,12 @@ export function App({ profile, scripts = [] }: AppProps) {
           // Display Lua output in the output area
           const segments = [{ text }];
           dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: text, segments });
+        },
+        createTrigger: (pattern: string, callback: any, options?: any) => {
+          return triggerManager.createTrigger(pattern, callback, options);
+        },
+        createAlias: (pattern: string, callback: any, options?: any) => {
+          return aliasManager.createAlias(pattern, callback, options);
         },
       });
 
@@ -168,6 +185,13 @@ export function App({ profile, scripts = [] }: AppProps) {
           segments: [{ text: 'Lua engine not initialized', color: '#ff0000' }],
         });
       }
+      return;
+    }
+
+    // Process aliases
+    const aliasMatched = await aliasManager.processInput(text);
+    if (aliasMatched) {
+      // Alias consumed the input
       return;
     }
 
