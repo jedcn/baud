@@ -169,6 +169,81 @@ echo("Script loaded successfully!")
 echo("Health: 100/100")
 ```
 
+#### createTrigger(pattern, callback, options)
+Create a trigger that executes a Lua function when server output matches a pattern.
+
+**IMPORTANT:** When using regex patterns, escape backslashes in Lua strings! Use `\\d` not `\d`, and `\\w` not `\w`.
+
+**Capture Groups:** For regex triggers with capture groups:
+- `matches[1]` = the full matched string
+- `matches[2]` = first capture group
+- `matches[3]` = second capture group, etc.
+
+```lua
+-- Simple trigger (literal text match)
+createTrigger("You have been poisoned!", function()
+  send("drink antidote")
+  echo("Auto-cured poison!")
+end)
+
+-- Regex trigger with capture groups
+-- NOTE: Use \\d (double backslash) for JavaScript regex patterns!
+createTrigger("^You have (\\d+)/(\\d+) health", function(matches)
+  local current = tonumber(matches[2])  -- First capture group
+  local max = tonumber(matches[3])      -- Second capture group
+  if current < max * 0.3 then
+    send("flee")
+    echo("Health critical! Fleeing!")
+  end
+end, { type = "regex" })
+
+-- Gag trigger (hide matching lines)
+createTrigger("The shopkeeper yawns.", function()
+  -- This line will be hidden from output
+end, { gag = true })
+```
+
+**Options:**
+- `type` - `"literal"` (default) or `"regex"`
+- `enabled` - `true` (default) or `false`
+- `priority` - Number for execution order (higher = first)
+- `gag` - `true` to hide matched lines, `false` (default)
+
+#### createAlias(pattern, callback, options)
+Create an alias that executes a Lua function when user input matches a pattern.
+
+**IMPORTANT:** When using regex patterns, escape backslashes in Lua strings! Use `\\d` not `\d`, and `\\w` not `\w`.
+
+**Capture Groups:** For regex aliases with capture groups:
+- `matches[1]` = the full matched string
+- `matches[2]` = first capture group
+- `matches[3]` = second capture group, etc.
+
+```lua
+-- Simple alias
+createAlias("^gg$", function()
+  send("say Good game, everyone!")
+end, { type = "regex" })
+
+-- Alias with capture groups
+-- NOTE: Use \\w (double backslash) for JavaScript regex patterns!
+createAlias("^greet (\\w+)$", function(matches)
+  send("say Hello, " .. matches[2] .. "!")  -- First capture group
+end, { type = "regex" })
+
+-- Multi-step alias
+createAlias("^n(\\d+)$", function(matches)
+  local times = tonumber(matches[2])  -- First capture group
+  for i = 1, times do
+    send("north")
+  end
+end, { type = "regex" })
+```
+
+**Options:**
+- `type` - `"literal"` (default) or `"regex"`
+- `enabled` - `true` (default) or `false`
+
 ### Example Script
 
 Here's a simple example script (`example.lua`):
@@ -201,13 +276,21 @@ Then use it interactively:
 /lua look_around()
 ```
 
+### Advanced Usage
+
+See `triggers.lua` for a comprehensive example showing:
+- Health monitoring with automatic flee
+- Message highlighting
+- Spam filtering with gag
+- Quick aliases for common commands
+- Complex aliases with state tracking
+
 ### Coming Soon
 
 Future phases will add:
-- **Triggers** - Execute Lua code when server output matches patterns
-- **Aliases** - Expand shortcuts into commands or Lua code
 - **Timers** - Schedule Lua functions to run at intervals
 - **Dynamic UI** - Create gauges, panels, and status bars from Lua
+- **SSH Support** - Connect via SSH in addition to telnet
 
 ## Development
 
@@ -287,14 +370,21 @@ bun test --coverage
 - ✅ Global API functions: `send()` and `echo()`
 - ✅ Script loading with error reporting
 
+**Phase 5 Complete** - Triggers & Aliases
+- ✅ `createTrigger()` - Match server output with literal or regex patterns
+- ✅ `createAlias()` - Match user input with literal or regex patterns
+- ✅ Capture groups for dynamic pattern matching
+- ✅ Trigger options: priority, gag, enabled
+- ✅ Pure Lua implementation (no JSON!)
+- ✅ Comprehensive example script (triggers.lua)
+
 ### Upcoming Features
 
-**Phase 5** - Triggers & Aliases
-- Pattern matching on server output
-- Execute Lua callbacks on matches
-- Alias expansion with Lua support
+**Phase 6** - Timers
+- Schedule Lua functions to run at intervals
+- One-shot and repeating timers
 
-**Phase 6+** - Timers, SSH, Dynamic UI, and more
+**Phase 7+** - SSH, Dynamic UI, and more
 
 ## Controls
 

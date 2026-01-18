@@ -5,6 +5,8 @@ export type LuaCallback = (...args: any[]) => void | Promise<void>;
 export interface LuaAPI {
   send: (text: string) => void;
   echo: (text: string) => void;
+  createTrigger: (pattern: string, callback: LuaCallback, options?: any) => string;
+  createAlias: (pattern: string, callback: LuaCallback, options?: any) => string;
 }
 
 export class LuaEngine {
@@ -26,6 +28,8 @@ export class LuaEngine {
     // Register global functions (without namespace)
     this.engine.global.set('send', this.api.send);
     this.engine.global.set('echo', this.api.echo);
+    this.engine.global.set('createTrigger', this.api.createTrigger);
+    this.engine.global.set('createAlias', this.api.createAlias);
   }
 
   /**
