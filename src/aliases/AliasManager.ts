@@ -1,7 +1,16 @@
 import { Alias, AliasCallback, AliasOptions } from './Alias.js';
+import type { LuaEngine } from '../scripting/LuaEngine.js';
 
 export class AliasManager {
   private aliases: Alias[] = [];
+  private luaEngine?: LuaEngine;
+
+  /**
+   * Set the Lua engine (for converting arrays to Lua tables)
+   */
+  setLuaEngine(engine: LuaEngine): void {
+    this.luaEngine = engine;
+  }
 
   /**
    * Create a new alias
@@ -65,8 +74,14 @@ export class AliasManager {
     for (const alias of this.aliases) {
       const result = alias.match(text);
       if (result.matched) {
+        // Convert captures to Lua table if we have a Lua engine
+        let captures = result.captures;
+        if (captures && this.luaEngine) {
+          captures = this.luaEngine.arrayToLuaTable(captures) as any;
+        }
+
         // Execute the alias callback
-        await alias.execute(result.captures);
+        await alias.execute(captures);
         return true; // Input was consumed by alias
       }
     }

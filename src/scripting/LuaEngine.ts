@@ -72,6 +72,39 @@ export class LuaEngine {
   }
 
   /**
+   * Convert a JavaScript array to a Lua table
+   * @param arr - JavaScript array to convert
+   * @returns Lua table
+   */
+  arrayToLuaTable(arr: string[]): any {
+    if (!this.engine) {
+      return arr;
+    }
+
+    try {
+      // Create a Lua table
+      const table = this.engine.global.newTable();
+
+      // Populate it with array elements (Lua uses 1-based indexing)
+      for (let i = 0; i < arr.length; i++) {
+        table.set(i + 1, arr[i]);
+      }
+
+      return table;
+    } catch (error) {
+      // Fallback to raw array if conversion fails
+      return arr;
+    }
+  }
+
+  /**
+   * Get the engine instance (for advanced usage)
+   */
+  getEngine(): WasmoonEngine | undefined {
+    return this.engine;
+  }
+
+  /**
    * Clean up resources
    */
   async cleanup(): Promise<void> {
