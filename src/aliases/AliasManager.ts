@@ -24,10 +24,8 @@ export class AliasManager {
     callback: AliasCallback,
     options?: AliasOptions
   ): string {
-    console.log('[AliasManager] Creating alias with pattern:', pattern, 'options:', options);
     const alias = new Alias(pattern, callback, options);
     this.aliases.push(alias);
-    console.log('[AliasManager] Total aliases:', this.aliases.length);
     return alias.id;
   }
 
@@ -73,21 +71,13 @@ export class AliasManager {
    * @returns True if an alias matched and was executed (input should be consumed)
    */
   async processInput(text: string): Promise<boolean> {
-    console.log('[AliasManager] Processing input:', JSON.stringify(text));
-    console.log('[AliasManager] Number of aliases:', this.aliases.length);
-
     for (const alias of this.aliases) {
-      console.log('[AliasManager] Checking alias:', alias.pattern, 'type:', alias.type, 'enabled:', alias.enabled);
       const result = alias.match(text);
-      console.log('[AliasManager] Match result:', result);
 
       if (result.matched) {
-        console.log('[AliasManager] MATCHED! Captures:', result.captures);
-
         // Convert captures to Lua table if we have a Lua engine
         let captures = result.captures;
         if (captures && this.luaEngine) {
-          console.log('[AliasManager] Converting captures to Lua table');
           captures = this.luaEngine.arrayToLuaTable(captures) as any;
         }
 
@@ -97,7 +87,6 @@ export class AliasManager {
       }
     }
 
-    console.log('[AliasManager] No alias matched');
     return false; // No alias matched, send to server
   }
 
