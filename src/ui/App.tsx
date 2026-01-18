@@ -19,6 +19,7 @@ export function App({ profile, scripts = [] }: AppProps) {
   const { state, dispatch } = useAppState();
   const ansiParser = useMemo(() => new ANSIParser(), []);
   const [luaEngine, setLuaEngine] = useState<LuaEngine | null>(null);
+  const connectionRef = useRef(state.connection.currentConnection);
 
   useEffect(() => {
     if (profile && !state.connection.currentConnection) {
@@ -72,13 +73,18 @@ export function App({ profile, scripts = [] }: AppProps) {
     }
   }, [profile]);
 
+  // Keep connection ref up to date
+  useEffect(() => {
+    connectionRef.current = state.connection.currentConnection;
+  }, [state.connection.currentConnection]);
+
   // Initialize Lua engine and load scripts
   useEffect(() => {
     const initLua = async () => {
       const engine = new LuaEngine({
         send: (text: string) => {
-          if (state.connection.currentConnection) {
-            state.connection.currentConnection.send(text);
+          if (connectionRef.current) {
+            connectionRef.current.send(text);
           }
         },
         echo: (text: string) => {
