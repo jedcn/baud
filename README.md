@@ -122,6 +122,93 @@ Each profile supports the following fields:
 - `password` (optional) - Password for SSH connections
 - `privateKey` (optional) - Path to SSH private key file
 
+## Lua Scripting
+
+baud includes a powerful Lua 5.4 scripting engine (via wasmoon) that allows you to automate gameplay, create triggers and aliases, and extend functionality.
+
+### Loading Scripts
+
+Load Lua scripts on startup using the `--script` flag:
+
+```bash
+# Load a single script
+bun run src/main.tsx --profile myserver --script ./triggers.lua
+
+# Load multiple scripts
+bun run src/main.tsx --profile myserver --script ./triggers.lua --script ./ui.lua
+```
+
+### Interactive Lua
+
+Execute Lua code interactively using the `/lua` command:
+
+```
+/lua echo("Hello from Lua!")
+/lua send("look")
+/lua x = 5 + 3
+/lua echo("Result: " .. x)
+```
+
+### Lua API
+
+baud provides the following global functions in Lua scripts:
+
+#### send(text)
+Send a command to the server.
+
+```lua
+send("look")
+send("say Hello, world!")
+```
+
+#### echo(text)
+Display a message in the output area (visible only to you).
+
+```lua
+echo("Script loaded successfully!")
+echo("Health: 100/100")
+```
+
+### Example Script
+
+Here's a simple example script (`example.lua`):
+
+```lua
+-- Display a startup message
+echo("My script loaded!")
+
+-- Define a function to greet other players
+function greet(name)
+  send("say Hello, " .. name .. "!")
+  echo("Greeted " .. name)
+end
+
+-- Define a function to look around
+function look_around()
+  send("look")
+  echo("Looking around...")
+end
+```
+
+Load it with:
+```bash
+bun run src/main.tsx --profile myserver --script ./example.lua
+```
+
+Then use it interactively:
+```
+/lua greet("Alice")
+/lua look_around()
+```
+
+### Coming Soon
+
+Future phases will add:
+- **Triggers** - Execute Lua code when server output matches patterns
+- **Aliases** - Expand shortcuts into commands or Lua code
+- **Timers** - Schedule Lua functions to run at intervals
+- **Dynamic UI** - Create gauges, panels, and status bars from Lua
+
 ## Development
 
 ### Project Structure
@@ -193,14 +280,21 @@ bun test --coverage
 - ✅ JSON configuration with Zod validation
 - ✅ Profile management (save, load, list)
 
+**Phase 4 Complete** - Lua Scripting Foundation
+- ✅ Lua 5.4 engine via wasmoon (WebAssembly)
+- ✅ Load .lua files with `--script` flag
+- ✅ Interactive `/lua` command
+- ✅ Global API functions: `send()` and `echo()`
+- ✅ Script loading with error reporting
+
 ### Upcoming Features
 
-**Phase 4** - Lua Scripting Foundation
-- Load and execute Lua scripts
-- Basic Lua API (send, echo)
-- `/lua` command for interactive execution
+**Phase 5** - Triggers & Aliases
+- Pattern matching on server output
+- Execute Lua callbacks on matches
+- Alias expansion with Lua support
 
-**Phase 5+** - Triggers, Aliases, Timers, SSH, Dynamic UI, and more
+**Phase 6+** - Timers, SSH, Dynamic UI, and more
 
 ## Controls
 
