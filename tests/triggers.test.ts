@@ -71,8 +71,8 @@ describe('Triggers', () => {
     // This tests the fix for the backslash escaping issue
     await luaEngine.execute(`
       createTrigger("^You have (\\\\d+)/(\\\\d+) health", function(matches)
-        local current = tonumber(matches[1])
-        local max = tonumber(matches[2])
+        local current = tonumber(matches[2])  -- First capture group
+        local max = tonumber(matches[3])      -- Second capture group
         local percent = (current / max) * 100
         echo(string.format("Health: %.0f%%", percent))
 
@@ -193,7 +193,7 @@ describe('Triggers', () => {
   test('regex trigger with word boundary matches correctly', async () => {
     await luaEngine.execute(`
       createTrigger("^(\\\\w+) tells you", function(matches)
-        local player = matches[1]
+        local player = matches[2]  -- First capture group
         echo("Message from: " .. player)
       end, { type = "regex" })
     `);
@@ -241,8 +241,8 @@ describe('Triggers', () => {
   test('accessing non-existent capture group in trigger returns nil not error', async () => {
     await luaEngine.execute(`
       createTrigger("test", function(matches)
-        -- matches is now always a table (even if empty)
-        local value = matches[1] or "no match"
+        -- matches is now always a table (even if empty for literal matches)
+        local value = matches[2] or "no match"  -- No captures, so nil
         echo("Value: " .. value)
       end)
     `);
@@ -250,5 +250,21 @@ describe('Triggers', () => {
     await triggerManager.processLine('test');
 
     expect(echoedMessages).toContain('Value: no match');
+  });
+
+  test('matches[1] contains full matched string in trigger', async () => {
+    await luaEngine.execute(`
+      createTrigger("^(\\\\w+) tells you", function(matches)
+        local fullMatch = matches[1]  -- Full match
+        local player = matches[2]     -- First capture
+        echo("Full: " .. fullMatch)
+        echo("Player: " .. player)
+      end, { type = "regex" })
+    `);
+
+    await triggerManager.processLine('Alice tells you: hello');
+
+    expect(echoedMessages).toContain('Full: Alice tells you');
+    expect(echoedMessages).toContain('Player: Alice');
   });
 });

@@ -46,8 +46,10 @@ export class Alias {
     } else {
       const match = this.regex?.exec(text);
       if (match) {
-        // Return captured groups (excluding the full match at index 0)
-        const captures = match.slice(1);
+        // Return full match and captured groups
+        // matches[0] in JS becomes matches[1] in Lua (full match)
+        // matches[1] in JS becomes matches[2] in Lua (first capture)
+        const captures = Array.from(match);
         return { matched: true, captures };
       }
       return { matched: false };

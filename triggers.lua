@@ -11,9 +11,12 @@ end)
 
 -- Regex trigger with capture groups
 -- NOTE: Escape backslashes in Lua strings! Use \\d not %d for JavaScript regex
+-- matches[1] = full matched string
+-- matches[2] = first capture group
+-- matches[3] = second capture group, etc.
 createTrigger("^You have (\\d+)/(\\d+) health", function(matches)
-  local current = tonumber(matches[1])
-  local max = tonumber(matches[2])
+  local current = tonumber(matches[2])  -- First capture
+  local max = tonumber(matches[3])      -- Second capture
   local percent = (current / max) * 100
 
   echo(string.format("Health: %d%% (%d/%d)", percent, current, max))
@@ -26,7 +29,7 @@ end, { type = "regex" })
 
 -- Trigger that highlights messages from specific players
 createTrigger("^(\\w+) tells you", function(matches)
-  local player = matches[1]
+  local player = matches[2]  -- First capture group
   echo(">>> Message from: " .. player)
 end, { type = "regex" })
 
@@ -42,14 +45,14 @@ end, { type = "regex" })
 
 -- Alias with capture groups: greet a player
 createAlias("^greet (\\w+)$", function(matches)
-  local name = matches[1]
+  local name = matches[2]  -- First capture group
   send("say Hello, " .. name .. "!")
   send("emote waves at " .. name)
 end, { type = "regex" })
 
 -- Alias for quick navigation
 createAlias("^n(\\d+)$", function(matches)
-  local times = tonumber(matches[1])
+  local times = tonumber(matches[2])  -- First capture group
   for i = 1, times do
     send("north")
   end
@@ -62,13 +65,13 @@ mana_max = 100
 
 -- Track mana from server
 createTrigger("^Mana: (\\d+)/(\\d+)", function(matches)
-  mana_current = tonumber(matches[1])
-  mana_max = tonumber(matches[2])
+  mana_current = tonumber(matches[2])  -- First capture
+  mana_max = tonumber(matches[3])      -- Second capture
 end, { type = "regex" })
 
 -- Cast spell only if we have enough mana
 createAlias("^cast (\\w+)$", function(matches)
-  local spell = matches[1]
+  local spell = matches[2]  -- First capture group
   local mana_cost = 20  -- Simple example
 
   if mana_current >= mana_cost then

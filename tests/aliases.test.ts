@@ -69,7 +69,8 @@ describe('Aliases', () => {
     // This tests the fix for the backslash escaping issue
     await luaEngine.execute(`
       createAlias("^greet (\\\\w+)$", function(matches)
-        local name = matches[1]
+        local fullMatch = matches[1]  -- Full matched string
+        local name = matches[2]       -- First capture group
         send("say Hello, " .. name .. "!")
         send("emote waves at " .. name)
       end, { type = "regex" })
@@ -87,8 +88,8 @@ describe('Aliases', () => {
   test('regex alias with multiple captures', async () => {
     await luaEngine.execute(`
       createAlias("^move (\\\\w+) (\\\\d+)$", function(matches)
-        local direction = matches[1]
-        local times = tonumber(matches[2])
+        local direction = matches[2]     -- First capture group
+        local times = tonumber(matches[3])  -- Second capture group
         for i = 1, times do
           send(direction)
         end
@@ -198,9 +199,9 @@ describe('Aliases', () => {
   test('accessing non-existent capture group returns nil not error', async () => {
     await luaEngine.execute(`
       createAlias("test", function(matches)
-        -- matches is now always a table (even if empty)
+        -- matches is now always a table (even if empty for literal matches)
         -- accessing non-existent index returns nil, which is fine
-        local name = matches[1] or "default"
+        local name = matches[2] or "default"  -- No captures, so nil
         send("Hello, " .. name)
       end)
     `);
@@ -209,5 +210,22 @@ describe('Aliases', () => {
 
     expect(matched).toBe(true);
     expect(sentCommands).toContain('Hello, default');
+  });
+
+  test('matches[1] contains full matched string', async () => {
+    await luaEngine.execute(`
+      createAlias("^greet (\\\\w+)$", function(matches)
+        local fullMatch = matches[1]  -- Should be "greet jed"
+        local name = matches[2]       -- Should be "jed"
+        echo("Full: " .. fullMatch)
+        echo("Name: " .. name)
+      end, { type = "regex" })
+    `);
+
+    const matched = await aliasManager.processInput('greet jed');
+
+    expect(matched).toBe(true);
+    expect(echoedMessages).toContain('Full: greet jed');
+    expect(echoedMessages).toContain('Name: jed');
   });
 });
