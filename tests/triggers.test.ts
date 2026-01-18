@@ -31,7 +31,6 @@ describe('Triggers', () => {
     });
 
     await luaEngine.initialize();
-    triggerManager.setLuaEngine(luaEngine);
   });
 
   test('simple literal trigger fires on matching text', async () => {

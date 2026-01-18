@@ -31,7 +31,6 @@ describe('Aliases', () => {
     });
 
     await luaEngine.initialize();
-    aliasManager.setLuaEngine(luaEngine);
   });
 
   test('simple literal alias expands correctly', async () => {
