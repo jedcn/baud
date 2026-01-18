@@ -10,7 +10,8 @@ createTrigger("Welcome to the game!", function()
 end)
 
 -- Regex trigger with capture groups
-createTrigger("^You have (%d+)/(%d+) health", function(matches)
+-- NOTE: Escape backslashes in Lua strings! Use \\d not %d for JavaScript regex
+createTrigger("^You have (\\d+)/(\\d+) health", function(matches)
   local current = tonumber(matches[1])
   local max = tonumber(matches[2])
   local percent = (current / max) * 100
@@ -24,7 +25,7 @@ createTrigger("^You have (%d+)/(%d+) health", function(matches)
 end, { type = "regex" })
 
 -- Trigger that highlights messages from specific players
-createTrigger("^(%w+) tells you", function(matches)
+createTrigger("^(\\w+) tells you", function(matches)
   local player = matches[1]
   echo(">>> Message from: " .. player)
 end, { type = "regex" })
@@ -40,14 +41,14 @@ createAlias("^gg$", function()
 end, { type = "regex" })
 
 -- Alias with capture groups: greet a player
-createAlias("^greet (%w+)$", function(matches)
+createAlias("^greet (\\w+)$", function(matches)
   local name = matches[1]
   send("say Hello, " .. name .. "!")
   send("emote waves at " .. name)
 end, { type = "regex" })
 
 -- Alias for quick navigation
-createAlias("^n(%d+)$", function(matches)
+createAlias("^n(\\d+)$", function(matches)
   local times = tonumber(matches[1])
   for i = 1, times do
     send("north")
@@ -60,13 +61,13 @@ mana_current = 100
 mana_max = 100
 
 -- Track mana from server
-createTrigger("^Mana: (%d+)/(%d+)", function(matches)
+createTrigger("^Mana: (\\d+)/(\\d+)", function(matches)
   mana_current = tonumber(matches[1])
   mana_max = tonumber(matches[2])
 end, { type = "regex" })
 
 -- Cast spell only if we have enough mana
-createAlias("^cast (%w+)$", function(matches)
+createAlias("^cast (\\w+)$", function(matches)
   local spell = matches[1]
   local mana_cost = 20  -- Simple example
 

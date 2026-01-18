@@ -172,6 +172,8 @@ echo("Health: 100/100")
 #### createTrigger(pattern, callback, options)
 Create a trigger that executes a Lua function when server output matches a pattern.
 
+**IMPORTANT:** When using regex patterns, escape backslashes in Lua strings! Use `\\d` not `\d`, and `\\w` not `\w`.
+
 ```lua
 -- Simple trigger (literal text match)
 createTrigger("You have been poisoned!", function()
@@ -180,7 +182,8 @@ createTrigger("You have been poisoned!", function()
 end)
 
 -- Regex trigger with capture groups
-createTrigger("^You have (%d+)/(%d+) health", function(matches)
+-- NOTE: Use \\d (double backslash) for JavaScript regex patterns!
+createTrigger("^You have (\\d+)/(\\d+) health", function(matches)
   local current = tonumber(matches[1])
   local max = tonumber(matches[2])
   if current < max * 0.3 then
@@ -204,6 +207,8 @@ end, { gag = true })
 #### createAlias(pattern, callback, options)
 Create an alias that executes a Lua function when user input matches a pattern.
 
+**IMPORTANT:** When using regex patterns, escape backslashes in Lua strings! Use `\\d` not `\d`, and `\\w` not `\w`.
+
 ```lua
 -- Simple alias
 createAlias("^gg$", function()
@@ -211,12 +216,13 @@ createAlias("^gg$", function()
 end, { type = "regex" })
 
 -- Alias with capture groups
-createAlias("^greet (%w+)$", function(matches)
+-- NOTE: Use \\w (double backslash) for JavaScript regex patterns!
+createAlias("^greet (\\w+)$", function(matches)
   send("say Hello, " .. matches[1] .. "!")
 end, { type = "regex" })
 
 -- Multi-step alias
-createAlias("^n(%d+)$", function(matches)
+createAlias("^n(\\d+)$", function(matches)
   local times = tonumber(matches[1])
   for i = 1, times do
     send("north")

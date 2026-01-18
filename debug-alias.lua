@@ -2,7 +2,9 @@
 
 echo("Creating test alias...")
 
-createAlias("^greet (%w+)$", function(matches)
+-- NOTE: In Lua, backslashes in strings need to be escaped!
+-- Use \\w instead of %w for regex patterns
+createAlias("^greet (\\w+)$", function(matches)
   echo("*** ALIAS MATCHED! ***")
   if matches then
     echo("Matches type: " .. type(matches))
