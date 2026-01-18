@@ -6,7 +6,7 @@ import { StateProvider } from './state/StateContext.js';
 import { ConfigManager } from './config/ConfigManager.js';
 import type { ConnectionProfile } from './state/AppState.js';
 
-async function parseArgs(): Promise<{ profile?: ConnectionProfile }> {
+async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: string[] }> {
   const args = process.argv.slice(2);
   const configManager = ConfigManager.getInstance();
 
@@ -14,6 +14,7 @@ async function parseArgs(): Promise<{ profile?: ConnectionProfile }> {
   let port: number | undefined;
   let profileName: string | undefined;
   let saveProfile: string | undefined;
+  const scripts: string[] = [];
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--host' && args[i + 1]) {
@@ -28,25 +29,30 @@ async function parseArgs(): Promise<{ profile?: ConnectionProfile }> {
     } else if (args[i] === '--save-profile' && args[i + 1]) {
       saveProfile = args[i + 1];
       i++;
+    } else if (args[i] === '--script' && args[i + 1]) {
+      scripts.push(args[i + 1]);
+      i++;
     } else if (args[i] === '--help' || args[i] === '-h') {
       console.log(`
 baud - Terminal MUD/BBS Client
 
 Usage:
-  baud --profile <name>
-  baud --host <hostname> --port <port> [--save-profile <name>]
+  baud --profile <name> [--script <path>]...
+  baud --host <hostname> --port <port> [--save-profile <name>] [--script <path>]...
 
 Options:
   --profile <name>         Connect using a saved profile
   --host <hostname>        Server hostname or IP address
   --port <port>            Server port number
   --save-profile <name>    Save this connection as a profile
+  --script <path>          Load a Lua script file (can be specified multiple times)
   --help, -h               Show this help message
 
 Examples:
   baud --profile myserver
   baud --host localhost --port 4000
   baud --host bbs.example.com --port 23 --save-profile mybbs
+  baud --profile myserver --script ./triggers.lua --script ./aliases.lua
       `);
       process.exit(0);
     }
@@ -60,7 +66,7 @@ Examples:
       console.error('Use --host and --port to connect directly, or check your profiles.');
       process.exit(1);
     }
-    return { profile };
+    return { profile, scripts };
   }
 
   // Otherwise, require --host and --port
@@ -86,13 +92,13 @@ Examples:
     console.log(`Profile '${saveProfile}' saved successfully.`);
   }
 
-  return { profile };
+  return { profile, scripts };
 }
 
-const { profile } = await parseArgs();
+const { profile, scripts } = await parseArgs();
 
 render(
   <StateProvider>
-    <App profile={profile} />
+    <App profile={profile} scripts={scripts} />
   </StateProvider>
 );

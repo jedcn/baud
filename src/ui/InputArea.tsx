@@ -4,7 +4,7 @@ import { useLineEditor } from './hooks/useLineEditor.js';
 import { useCommandHistory } from './hooks/useCommandHistory.js';
 
 interface InputAreaProps {
-  onSubmit: (text: string) => void;
+  onSubmit: (text: string) => void | Promise<void>;
 }
 
 export function InputArea({ onSubmit }: InputAreaProps) {
