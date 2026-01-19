@@ -10,6 +10,7 @@ import { LuaEngine } from '../scripting/LuaEngine.js';
 import { ScriptLoader } from '../scripting/ScriptLoader.js';
 import { TriggerManager } from '../triggers/TriggerManager.js';
 import { AliasManager } from '../aliases/AliasManager.js';
+import { TimerManager } from '../timers/TimerManager.js';
 import type { ConnectionProfile } from '../state/AppState.js';
 
 interface AppProps {
@@ -24,6 +25,7 @@ export function App({ profile, scripts = [] }: AppProps) {
   const connectionRef = useRef(state.connection.currentConnection);
   const triggerManager = useMemo(() => new TriggerManager(), []);
   const aliasManager = useMemo(() => new AliasManager(), []);
+  const timerManager = useMemo(() => new TimerManager(), []);
 
   // Error handler for Lua script errors
   const handleLuaError = (error: Error) => {
@@ -122,7 +124,13 @@ export function App({ profile, scripts = [] }: AppProps) {
         createAlias: (pattern: string, callback: any, options?: any) => {
           return aliasManager.createAlias(pattern, callback, options);
         },
+        createTimer: (interval: number, callback: any, options?: any) => {
+          return timerManager.createTimer(interval, callback, options);
+        },
       });
+
+      // Set error handler for timers
+      timerManager.setErrorHandler(handleLuaError);
 
       await engine.initialize();
       setLuaEngine(engine);
@@ -157,6 +165,7 @@ export function App({ profile, scripts = [] }: AppProps) {
       if (luaEngine) {
         luaEngine.cleanup();
       }
+      timerManager.stopAll();
     };
   }, [scripts]);
 

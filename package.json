@@ -27,10 +27,11 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@types/react": "^18.3.12",
     "@types/ssh2": "^1.15.1",
-    "@biomejs/biome": "^1.9.4",
     "bun-types": "latest",
-    "ink-testing-library": "^4.0.0"
+    "ink-testing-library": "^4.0.0",
+    "react-devtools-core": "^7.0.1"
   }
 }
