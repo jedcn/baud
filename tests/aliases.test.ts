@@ -24,10 +24,15 @@ describe('Aliases', () => {
       echo: (text: string) => {
         echoedMessages.push(text);
       },
-      createTrigger: () => '', // Not needed for alias tests
+      createTrigger: () => '',
       createAlias: (pattern: string, callback: any, options?: any) => {
         return aliasManager.createAlias(pattern, callback, options);
       },
+      createTimer: () => '',
+      getTimers: () => [],
+      removeTimer: () => false,
+      enableTimer: () => {},
+      disableTimer: () => {},
     });
 
     await luaEngine.initialize();

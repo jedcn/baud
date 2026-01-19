@@ -10,6 +10,7 @@ import { LuaEngine } from '../scripting/LuaEngine.js';
 import { ScriptLoader } from '../scripting/ScriptLoader.js';
 import { TriggerManager } from '../triggers/TriggerManager.js';
 import { AliasManager } from '../aliases/AliasManager.js';
+import { TimerManager } from '../timers/TimerManager.js';
 import type { ConnectionProfile } from '../state/AppState.js';
 
 interface AppProps {
@@ -24,6 +25,7 @@ export function App({ profile, scripts = [] }: AppProps) {
   const connectionRef = useRef(state.connection.currentConnection);
   const triggerManager = useMemo(() => new TriggerManager(), []);
   const aliasManager = useMemo(() => new AliasManager(), []);
+  const timerManager = useMemo(() => new TimerManager(), []);
 
   // Error handler for Lua script errors
   const handleLuaError = (error: Error) => {
@@ -122,7 +124,32 @@ export function App({ profile, scripts = [] }: AppProps) {
         createAlias: (pattern: string, callback: any, options?: any) => {
           return aliasManager.createAlias(pattern, callback, options);
         },
+        createTimer: (interval: number, callback: any, options?: any) => {
+          return timerManager.createTimer(interval, callback, options);
+        },
+        getTimers: () => {
+          return timerManager.getTimers().map((t) => ({
+            id: t.id,
+            interval: t.interval,
+            repeating: t.repeating,
+            enabled: t.enabled,
+            running: t.running,
+            name: t.name,
+          }));
+        },
+        removeTimer: (id: string) => {
+          return timerManager.removeTimer(id);
+        },
+        enableTimer: (id: string) => {
+          timerManager.enableTimer(id);
+        },
+        disableTimer: (id: string) => {
+          timerManager.disableTimer(id);
+        },
       });
+
+      // Set error handler for timers
+      timerManager.setErrorHandler(handleLuaError);
 
       await engine.initialize();
       setLuaEngine(engine);
@@ -157,6 +184,7 @@ export function App({ profile, scripts = [] }: AppProps) {
       if (luaEngine) {
         luaEngine.cleanup();
       }
+      timerManager.stopAll();
     };
   }, [scripts]);
 
@@ -175,7 +203,13 @@ export function App({ profile, scripts = [] }: AppProps) {
     if (text.startsWith('/lua ')) {
       const luaCode = text.slice(5); // Remove "/lua " prefix
       if (luaEngine) {
-        const result = await luaEngine.execute(luaCode);
+        // Try to execute as "return <code>" first to capture expression values
+        // If that fails (syntax error), fall back to executing normally
+        let result = await luaEngine.execute(`return ${luaCode}`);
+        if (!result.success) {
+          // Failed with return prefix, try without
+          result = await luaEngine.execute(luaCode);
+        }
         if (!result.success) {
           dispatch({
             type: 'OUTPUT_LINE_RECEIVED',
@@ -184,7 +218,9 @@ export function App({ profile, scripts = [] }: AppProps) {
           });
         } else if (result.result !== undefined && result.result !== null) {
           // Display the result if there is one
-          const resultText = String(result.result);
+          const resultText = typeof result.result === 'object'
+            ? JSON.stringify(result.result, null, 2)
+            : String(result.result);
           dispatch({
             type: 'OUTPUT_LINE_RECEIVED',
             line: resultText,

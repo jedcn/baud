@@ -27,7 +27,12 @@ describe('Triggers', () => {
       createTrigger: (pattern: string, callback: any, options?: any) => {
         return triggerManager.createTrigger(pattern, callback, options);
       },
-      createAlias: () => '', // Not needed for trigger tests
+      createAlias: () => '',
+      createTimer: () => '',
+      getTimers: () => [],
+      removeTimer: () => false,
+      enableTimer: () => {},
+      disableTimer: () => {},
     });
 
     await luaEngine.initialize();

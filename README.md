@@ -244,6 +244,151 @@ end, { type = "regex" })
 - `type` - `"literal"` (default) or `"regex"`
 - `enabled` - `true` (default) or `false`
 
+#### createTimer(interval, callback, options)
+Create a timer that executes a Lua function at regular intervals.
+
+```lua
+-- Basic repeating timer (every 5 seconds)
+createTimer(5000, function()
+  send("look")
+end)
+
+-- One-shot timer (fires once after 10 seconds)
+createTimer(10000, function()
+  echo("Time's up!")
+end, { repeating = false })
+
+-- Named timer (for easier identification)
+createTimer(3000, function()
+  echo("Tick!")
+end, { name = "my ticker" })
+
+-- Disabled timer (won't start until enabled)
+createTimer(1000, function()
+  send("tick")
+end, { enabled = false, name = "paused timer" })
+```
+
+**Options:**
+- `repeating` - `true` (default) to repeat, `false` for one-shot
+- `enabled` - `true` (default) or `false`
+- `name` - Optional string to identify the timer
+
+**Returns:** Timer ID (string) for use with other timer functions.
+
+#### getTimers()
+Get a list of all timers with their current state.
+
+```lua
+local timers = getTimers()
+for i, timer in ipairs(timers) do
+  echo(string.format("Timer %s: %dms, running=%s",
+    timer.name or timer.id,
+    timer.interval,
+    tostring(timer.running)))
+end
+```
+
+Each timer object contains:
+- `id` - Unique timer identifier
+- `interval` - Milliseconds between executions
+- `repeating` - Whether timer repeats
+- `enabled` - Whether timer is enabled
+- `running` - Whether timer is currently active
+- `name` - Optional name (if provided)
+
+#### removeTimer(id)
+Stop and remove a timer by its ID.
+
+```lua
+local id = createTimer(1000, function() echo("tick") end)
+-- Later...
+removeTimer(id)  -- Returns true if found and removed
+```
+
+#### enableTimer(id)
+Enable and start a disabled timer.
+
+```lua
+local id = createTimer(1000, function()
+  echo("tick")
+end, { enabled = false })
+
+-- Later, start the timer
+enableTimer(id)
+```
+
+#### disableTimer(id)
+Stop a running timer without removing it.
+
+```lua
+local id = createTimer(1000, function() echo("tick") end)
+-- Later, pause the timer
+disableTimer(id)
+-- Can be restarted with enableTimer(id)
+```
+
+#### Timer Examples
+
+**Auto-look timer:** Automatically look around every 30 seconds.
+
+```lua
+-- Create a timer that sends "look" every 30 seconds
+createTimer(30000, function()
+  send("look")
+end, { name = "auto-look" })
+```
+
+**Buff reminder:** Remind yourself to recast buffs.
+
+```lua
+-- Remind to recast shield spell every 5 minutes
+createTimer(300000, function()
+  echo("*** Time to recast shield! ***")
+end, { name = "shield-reminder" })
+```
+
+**Pause and resume:** Control timers interactively.
+
+```lua
+-- In a script, create a timer and store its ID globally
+autoAttackTimer = createTimer(2000, function()
+  send("attack")
+end, { name = "auto-attack" })
+
+-- Later, from /lua command, pause it:
+-- /lua disableTimer(autoAttackTimer)
+
+-- Resume it:
+-- /lua enableTimer(autoAttackTimer)
+
+-- Or remove it entirely:
+-- /lua removeTimer(autoAttackTimer)
+```
+
+**One-shot delay:** Execute something once after a delay.
+
+```lua
+-- Wait 5 seconds then send a command
+createTimer(5000, function()
+  send("say I'm back!")
+  echo("Announced return")
+end, { repeating = false, name = "announce-return" })
+```
+
+**List and manage timers:** See what's running.
+
+```lua
+-- View all active timers (from /lua)
+-- /lua getTimers()
+
+-- Remove all timers by iterating
+for i, timer in ipairs(getTimers()) do
+  removeTimer(timer.id)
+end
+echo("All timers removed")
+```
+
 ### Example Script
 
 Here's a simple example script (`example.lua`):
@@ -288,7 +433,6 @@ See `triggers.lua` for a comprehensive example showing:
 ### Coming Soon
 
 Future phases will add:
-- **Timers** - Schedule Lua functions to run at intervals
 - **Dynamic UI** - Create gauges, panels, and status bars from Lua
 - **SSH Support** - Connect via SSH in addition to telnet
 
@@ -378,11 +522,14 @@ bun test --coverage
 - ✅ Pure Lua implementation (no JSON!)
 - ✅ Comprehensive example script (triggers.lua)
 
-### Upcoming Features
+**Phase 6 Complete** - Timers
+- ✅ `createTimer()` - Schedule Lua functions to run at intervals
+- ✅ One-shot and repeating timers
+- ✅ `getTimers()` - List all timers with state
+- ✅ `removeTimer()` - Stop and remove timers
+- ✅ `enableTimer()` / `disableTimer()` - Control timer execution
 
-**Phase 6** - Timers
-- Schedule Lua functions to run at intervals
-- One-shot and repeating timers
+### Upcoming Features
 
 **Phase 7+** - SSH, Dynamic UI, and more
 
