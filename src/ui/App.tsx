@@ -203,7 +203,13 @@ export function App({ profile, scripts = [] }: AppProps) {
     if (text.startsWith('/lua ')) {
       const luaCode = text.slice(5); // Remove "/lua " prefix
       if (luaEngine) {
-        const result = await luaEngine.execute(luaCode);
+        // Try to execute as "return <code>" first to capture expression values
+        // If that fails (syntax error), fall back to executing normally
+        let result = await luaEngine.execute(`return ${luaCode}`);
+        if (!result.success) {
+          // Failed with return prefix, try without
+          result = await luaEngine.execute(luaCode);
+        }
         if (!result.success) {
           dispatch({
             type: 'OUTPUT_LINE_RECEIVED',

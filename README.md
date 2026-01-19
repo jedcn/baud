@@ -328,6 +328,67 @@ disableTimer(id)
 -- Can be restarted with enableTimer(id)
 ```
 
+#### Timer Examples
+
+**Auto-look timer:** Automatically look around every 30 seconds.
+
+```lua
+-- Create a timer that sends "look" every 30 seconds
+createTimer(30000, function()
+  send("look")
+end, { name = "auto-look" })
+```
+
+**Buff reminder:** Remind yourself to recast buffs.
+
+```lua
+-- Remind to recast shield spell every 5 minutes
+createTimer(300000, function()
+  echo("*** Time to recast shield! ***")
+end, { name = "shield-reminder" })
+```
+
+**Pause and resume:** Control timers interactively.
+
+```lua
+-- In a script, create a timer and store its ID globally
+autoAttackTimer = createTimer(2000, function()
+  send("attack")
+end, { name = "auto-attack" })
+
+-- Later, from /lua command, pause it:
+-- /lua disableTimer(autoAttackTimer)
+
+-- Resume it:
+-- /lua enableTimer(autoAttackTimer)
+
+-- Or remove it entirely:
+-- /lua removeTimer(autoAttackTimer)
+```
+
+**One-shot delay:** Execute something once after a delay.
+
+```lua
+-- Wait 5 seconds then send a command
+createTimer(5000, function()
+  send("say I'm back!")
+  echo("Announced return")
+end, { repeating = false, name = "announce-return" })
+```
+
+**List and manage timers:** See what's running.
+
+```lua
+-- View all active timers (from /lua)
+-- /lua getTimers()
+
+-- Remove all timers by iterating
+for i, timer in ipairs(getTimers()) do
+  removeTimer(timer.id)
+end
+echo("All timers removed")
+```
+
 ### Example Script
 
 Here's a simple example script (`example.lua`):
