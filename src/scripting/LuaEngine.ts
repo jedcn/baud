@@ -2,12 +2,25 @@ import { LuaFactory, LuaEngine as WasmoonEngine } from 'wasmoon';
 
 export type LuaCallback = (...args: any[]) => void | Promise<void>;
 
+export interface TimerInfo {
+  id: string;
+  interval: number;
+  repeating: boolean;
+  enabled: boolean;
+  running: boolean;
+  name?: string;
+}
+
 export interface LuaAPI {
   send: (text: string) => void;
   echo: (text: string) => void;
   createTrigger: (pattern: string, callback: LuaCallback, options?: any) => string;
   createAlias: (pattern: string, callback: LuaCallback, options?: any) => string;
   createTimer: (interval: number, callback: LuaCallback, options?: any) => string;
+  getTimers: () => TimerInfo[];
+  removeTimer: (id: string) => boolean;
+  enableTimer: (id: string) => void;
+  disableTimer: (id: string) => void;
 }
 
 export class LuaEngine {
@@ -32,6 +45,10 @@ export class LuaEngine {
     this.engine.global.set('createTrigger', this.api.createTrigger);
     this.engine.global.set('createAlias', this.api.createAlias);
     this.engine.global.set('createTimer', this.api.createTimer);
+    this.engine.global.set('getTimers', this.api.getTimers);
+    this.engine.global.set('removeTimer', this.api.removeTimer);
+    this.engine.global.set('enableTimer', this.api.enableTimer);
+    this.engine.global.set('disableTimer', this.api.disableTimer);
   }
 
   /**

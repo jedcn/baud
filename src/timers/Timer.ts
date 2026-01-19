@@ -3,6 +3,7 @@ export type TimerCallback = () => void | Promise<void>;
 export interface TimerOptions {
   repeating?: boolean;
   enabled?: boolean;
+  name?: string;
 }
 
 export class Timer {
@@ -12,6 +13,7 @@ export class Timer {
   public repeating: boolean;
   public enabled: boolean;
   public running: boolean = false;
+  public name?: string;
   private timeoutId?: ReturnType<typeof setTimeout>;
   private intervalId?: ReturnType<typeof setInterval>;
   private onError?: (error: Error) => void;
@@ -26,6 +28,7 @@ export class Timer {
     this.callback = callback;
     this.repeating = options.repeating !== false;
     this.enabled = options.enabled !== false;
+    this.name = options.name;
   }
 
   /**

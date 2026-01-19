@@ -29,6 +29,25 @@ describe('Timers', () => {
       createTimer: (interval: number, callback: any, options?: any) => {
         return timerManager.createTimer(interval, callback, options);
       },
+      getTimers: () => {
+        return timerManager.getTimers().map((t) => ({
+          id: t.id,
+          interval: t.interval,
+          repeating: t.repeating,
+          enabled: t.enabled,
+          running: t.running,
+          name: t.name,
+        }));
+      },
+      removeTimer: (id: string) => {
+        return timerManager.removeTimer(id);
+      },
+      enableTimer: (id: string) => {
+        timerManager.enableTimer(id);
+      },
+      disableTimer: (id: string) => {
+        timerManager.disableTimer(id);
+      },
     });
 
     await luaEngine.initialize();

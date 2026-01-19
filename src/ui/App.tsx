@@ -127,6 +127,25 @@ export function App({ profile, scripts = [] }: AppProps) {
         createTimer: (interval: number, callback: any, options?: any) => {
           return timerManager.createTimer(interval, callback, options);
         },
+        getTimers: () => {
+          return timerManager.getTimers().map((t) => ({
+            id: t.id,
+            interval: t.interval,
+            repeating: t.repeating,
+            enabled: t.enabled,
+            running: t.running,
+            name: t.name,
+          }));
+        },
+        removeTimer: (id: string) => {
+          return timerManager.removeTimer(id);
+        },
+        enableTimer: (id: string) => {
+          timerManager.enableTimer(id);
+        },
+        disableTimer: (id: string) => {
+          timerManager.disableTimer(id);
+        },
       });
 
       // Set error handler for timers
@@ -193,7 +212,9 @@ export function App({ profile, scripts = [] }: AppProps) {
           });
         } else if (result.result !== undefined && result.result !== null) {
           // Display the result if there is one
-          const resultText = String(result.result);
+          const resultText = typeof result.result === 'object'
+            ? JSON.stringify(result.result, null, 2)
+            : String(result.result);
           dispatch({
             type: 'OUTPUT_LINE_RECEIVED',
             line: resultText,
