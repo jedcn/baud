@@ -1,4 +1,6 @@
 import { LuaFactory, LuaEngine as WasmoonEngine } from 'wasmoon';
+import fs from 'node:fs';
+import path from 'node:path';
 
 export type LuaCallback = (...args: any[]) => void | Promise<void>;
 
@@ -42,6 +44,13 @@ export class LuaEngine {
     // Register global functions (without namespace)
     this.engine.global.set('send', this.api.send);
     this.engine.global.set('echo', this.api.echo);
+
+    // Override dofile to read from real filesystem
+    const engine = this.engine;
+    this.engine.global.set('dofile', (filepath: string) => {
+      const code = fs.readFileSync(filepath, 'utf-8');
+      return engine.doStringSync(code);
+    });
     this.engine.global.set('createTrigger', this.api.createTrigger);
     this.engine.global.set('createAlias', this.api.createAlias);
     this.engine.global.set('createTimer', this.api.createTimer);
@@ -81,6 +90,12 @@ export class LuaEngine {
     }
 
     try {
+      // Set SCRIPT_DIR global so scripts can load other files relative to themselves
+      if (filename) {
+        const scriptDir = path.dirname(filename) + '/';
+        this.engine.global.set('SCRIPT_DIR', scriptDir);
+      }
+
       await this.engine.doString(code);
       return { success: true };
     } catch (error) {
