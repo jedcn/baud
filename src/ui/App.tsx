@@ -3,6 +3,7 @@ import { Box } from 'ink';
 import { StatusBar } from './StatusBar.js';
 import { OutputArea } from './OutputArea.js';
 import { InputArea } from './InputArea.js';
+import { PromptLine } from './PromptLine.js';
 import { useAppState } from '../state/StateContext.js';
 import { TelnetConnection } from '../connection/TelnetConnection.js';
 import { ANSIParser } from '../connection/ANSIParser.js';
@@ -11,7 +12,7 @@ import { ScriptLoader } from '../scripting/ScriptLoader.js';
 import { TriggerManager } from '../triggers/TriggerManager.js';
 import { AliasManager } from '../aliases/AliasManager.js';
 import { TimerManager } from '../timers/TimerManager.js';
-import type { ConnectionProfile } from '../state/AppState.js';
+import type { ConnectionProfile, PromptSegment } from '../state/AppState.js';
 
 interface AppProps {
   profile?: ConnectionProfile;
@@ -23,9 +24,30 @@ export function App({ profile, scripts = [] }: AppProps) {
   const ansiParser = useMemo(() => new ANSIParser(), []);
   const [luaEngine, setLuaEngine] = useState<LuaEngine | null>(null);
   const connectionRef = useRef(state.connection.currentConnection);
+  const promptFnRef = useRef<(() => any) | null>(null);
   const triggerManager = useMemo(() => new TriggerManager(), []);
   const aliasManager = useMemo(() => new AliasManager(), []);
   const timerManager = useMemo(() => new TimerManager(), []);
+
+  // Evaluate the stored prompt function and dispatch segments
+  const evaluatePrompt = () => {
+    const fn = promptFnRef.current;
+    if (!fn) return;
+    try {
+      const result = fn();
+      if (Array.isArray(result)) {
+        const segments: PromptSegment[] = result.map((s: any) => ({
+          text: String(s.text ?? ''),
+          fg: s.fg,
+          bg: s.bg,
+          bold: s.bold,
+        }));
+        dispatch({ type: 'SET_PROMPT_SEGMENTS', segments });
+      }
+    } catch {
+      // Silently ignore prompt evaluation errors
+    }
+  };
 
   // Error handler for Lua script errors
   const handleLuaError = (error: Error) => {
@@ -61,6 +83,9 @@ export function App({ profile, scripts = [] }: AppProps) {
             }
           }
         }
+
+        // Re-evaluate prompt after processing server data
+        evaluatePrompt();
       });
 
       connection.on('status', (status: string, error?: string) => {
@@ -145,6 +170,27 @@ export function App({ profile, scripts = [] }: AppProps) {
         },
         disableTimer: (id: string) => {
           timerManager.disableTimer(id);
+        },
+        setPrompt: (segmentsOrFunction: any) => {
+          if (typeof segmentsOrFunction === 'function') {
+            promptFnRef.current = segmentsOrFunction;
+            evaluatePrompt();
+          } else if (Array.isArray(segmentsOrFunction)) {
+            promptFnRef.current = null;
+            const segments: PromptSegment[] = segmentsOrFunction.map((s: any) => ({
+              text: String(s.text ?? ''),
+              fg: s.fg,
+              bg: s.bg,
+              bold: s.bold,
+            }));
+            dispatch({ type: 'SET_PROMPT_SEGMENTS', segments });
+          } else {
+            promptFnRef.current = null;
+            dispatch({ type: 'SET_PROMPT_SEGMENTS', segments: [] });
+          }
+        },
+        refreshPrompt: () => {
+          evaluatePrompt();
         },
       });
 
@@ -254,6 +300,7 @@ export function App({ profile, scripts = [] }: AppProps) {
     <Box flexDirection="column" height="100%">
       <StatusBar />
       <OutputArea />
+      <PromptLine />
       <InputArea onSubmit={handleSubmit} />
     </Box>
   );

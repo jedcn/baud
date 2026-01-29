@@ -23,6 +23,8 @@ export interface LuaAPI {
   removeTimer: (id: string) => boolean;
   enableTimer: (id: string) => void;
   disableTimer: (id: string) => void;
+  setPrompt: (segmentsOrFunction: any) => void;
+  refreshPrompt: () => void;
 }
 
 export class LuaEngine {
@@ -58,6 +60,8 @@ export class LuaEngine {
     this.engine.global.set('removeTimer', this.api.removeTimer);
     this.engine.global.set('enableTimer', this.api.enableTimer);
     this.engine.global.set('disableTimer', this.api.disableTimer);
+    this.engine.global.set('setPrompt', this.api.setPrompt);
+    this.engine.global.set('refreshPrompt', this.api.refreshPrompt);
   }
 
   /**
