@@ -14,11 +14,11 @@ export function InputArea({ onSubmit }: InputAreaProps) {
   useInput((inputChar, key) => {
     // Enter key - submit command
     if (key.return) {
+      onSubmit(editor.text);
       if (editor.text.length > 0) {
-        onSubmit(editor.text);
         history.addCommand(editor.text);
-        editor.clear();
       }
+      editor.clear();
       return;
     }
 
@@ -120,7 +120,7 @@ export function InputArea({ onSubmit }: InputAreaProps) {
   const textAfter = editor.text.slice(editor.cursor + 1);
 
   return (
-    <Box borderStyle="single" borderColor="cyan" paddingX={1}>
+    <Box borderStyle="round" borderColor="cyan" paddingX={1}>
       <Text color="cyan">&gt; </Text>
       <Text>{textBefore}</Text>
       <Text inverse>{cursorChar}</Text>
