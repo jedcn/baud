@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import { useAppState } from '../state/StateContext.js';
 
-export function StatusBar() {
+export function StatusArea() {
   const { state } = useAppState();
   const { status, profile, error } = state.connection;
   const segments = state.statusSegments;

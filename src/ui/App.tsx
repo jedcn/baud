@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Text } from 'ink';
-import { StatusBar } from './StatusBar.js';
+import { StatusArea } from './StatusArea.js';
 import { OutputArea } from './OutputArea.js';
 import { InputArea } from './InputArea.js';
 import { useAppState } from '../state/StateContext.js';
@@ -301,7 +301,7 @@ export function App({ profile, scripts = [] }: AppProps) {
       <Box flexDirection="column" borderStyle="round" borderColor="cyan" flexShrink={0}>
         <InputArea onSubmit={handleSubmit} />
         <Box borderStyle="single" borderColor="gray" borderBottom={false} borderLeft={false} borderRight={false} />
-        <StatusBar />
+        <StatusArea />
       </Box>
     </Box>
   );
