@@ -5,6 +5,7 @@ import { useAppState } from '../state/StateContext.js';
 export function StatusBar() {
   const { state } = useAppState();
   const { status, profile, error } = state.connection;
+  const segments = state.statusSegments;
 
   const getStatusColor = () => {
     switch (status) {
@@ -32,8 +33,35 @@ export function StatusBar() {
     }
   };
 
+  // If custom segments are set via Lua, render those
+  if (segments.length > 0) {
+    const elements: React.ReactNode[] = [];
+
+    for (let i = 0; i < segments.length; i++) {
+      const seg = segments[i];
+      elements.push(
+        <Text
+          key={`seg-${i}`}
+          color={seg.fg ?? 'green'}
+          backgroundColor={seg.bg}
+          bold={seg.bold ?? false}
+        >
+          {` ${seg.text} `}
+        </Text>
+      );
+
+    }
+
+    return (
+      <Box borderStyle="round" borderColor="cyan" paddingX={1} flexShrink={0}>
+        {elements}
+      </Box>
+    );
+  }
+
+  // Default: show connection status
   return (
-    <Box borderStyle="single" paddingX={1}>
+    <Box borderStyle="round" borderColor="cyan" paddingX={1} flexShrink={0}>
       <Text color={getStatusColor()}>{getStatusText()}</Text>
     </Box>
   );

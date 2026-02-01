@@ -11,7 +11,7 @@ import { ScriptLoader } from '../scripting/ScriptLoader.js';
 import { TriggerManager } from '../triggers/TriggerManager.js';
 import { AliasManager } from '../aliases/AliasManager.js';
 import { TimerManager } from '../timers/TimerManager.js';
-import type { ConnectionProfile } from '../state/AppState.js';
+import type { ConnectionProfile, StatusSegment } from '../state/AppState.js';
 
 interface AppProps {
   profile?: ConnectionProfile;
@@ -23,9 +23,30 @@ export function App({ profile, scripts = [] }: AppProps) {
   const ansiParser = useMemo(() => new ANSIParser(), []);
   const [luaEngine, setLuaEngine] = useState<LuaEngine | null>(null);
   const connectionRef = useRef(state.connection.currentConnection);
+  const statusFnRef = useRef<(() => any) | null>(null);
   const triggerManager = useMemo(() => new TriggerManager(), []);
   const aliasManager = useMemo(() => new AliasManager(), []);
   const timerManager = useMemo(() => new TimerManager(), []);
+
+  // Evaluate the stored status function and dispatch segments
+  const evaluateStatus = () => {
+    const fn = statusFnRef.current;
+    if (!fn) return;
+    try {
+      const result = fn();
+      if (Array.isArray(result)) {
+        const segments: StatusSegment[] = result.map((s: any) => ({
+          text: String(s.text ?? ''),
+          fg: s.fg,
+          bg: s.bg,
+          bold: s.bold,
+        }));
+        dispatch({ type: 'SET_STATUS_SEGMENTS', segments });
+      }
+    } catch {
+      // Silently ignore status evaluation errors
+    }
+  };
 
   // Error handler for Lua script errors
   const handleLuaError = (error: Error) => {
@@ -61,6 +82,9 @@ export function App({ profile, scripts = [] }: AppProps) {
             }
           }
         }
+
+        // Re-evaluate status bar after processing server data
+        evaluateStatus();
       });
 
       connection.on('status', (status: string, error?: string) => {
@@ -145,6 +169,27 @@ export function App({ profile, scripts = [] }: AppProps) {
         },
         disableTimer: (id: string) => {
           timerManager.disableTimer(id);
+        },
+        setStatus: (segmentsOrFunction: any) => {
+          if (typeof segmentsOrFunction === 'function') {
+            statusFnRef.current = segmentsOrFunction;
+            evaluateStatus();
+          } else if (Array.isArray(segmentsOrFunction)) {
+            statusFnRef.current = null;
+            const segments: StatusSegment[] = segmentsOrFunction.map((s: any) => ({
+              text: String(s.text ?? ''),
+              fg: s.fg,
+              bg: s.bg,
+              bold: s.bold,
+            }));
+            dispatch({ type: 'SET_STATUS_SEGMENTS', segments });
+          } else {
+            statusFnRef.current = null;
+            dispatch({ type: 'SET_STATUS_SEGMENTS', segments: [] });
+          }
+        },
+        refreshStatus: () => {
+          evaluateStatus();
         },
       });
 
@@ -252,9 +297,9 @@ export function App({ profile, scripts = [] }: AppProps) {
 
   return (
     <Box flexDirection="column" height="100%">
-      <StatusBar />
       <OutputArea />
       <InputArea onSubmit={handleSubmit} />
+      <StatusBar />
     </Box>
   );
 }
