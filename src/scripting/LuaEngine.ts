@@ -23,6 +23,7 @@ export interface LuaAPI {
   removeTimer: (id: string) => boolean;
   enableTimer: (id: string) => void;
   disableTimer: (id: string) => void;
+  setStatus: (segmentsOrFunction: any) => void;
 }
 
 export class LuaEngine {
@@ -58,6 +59,7 @@ export class LuaEngine {
     this.engine.global.set('removeTimer', this.api.removeTimer);
     this.engine.global.set('enableTimer', this.api.enableTimer);
     this.engine.global.set('disableTimer', this.api.disableTimer);
+    this.engine.global.set('setStatus', this.api.setStatus);
   }
 
   /**

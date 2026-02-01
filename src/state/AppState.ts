@@ -29,6 +29,11 @@ export interface ConnectionProfile {
   privateKey?: string;
 }
 
+export interface StatusSegment {
+  text: string;
+  fg?: string;
+}
+
 export interface AppState {
   connection: {
     status: ConnectionStatus;
@@ -40,6 +45,7 @@ export interface AppState {
     lines: OutputLine[];
     maxLines: number;
   };
+  statusSegments: StatusSegment[];
 }
 
 export type AppAction =
@@ -47,7 +53,8 @@ export type AppAction =
   | { type: 'CONNECTION_ESTABLISHED'; connection: ConnectionManager; profile: ConnectionProfile }
   | { type: 'CONNECTION_CLOSED' }
   | { type: 'OUTPUT_LINE_RECEIVED'; line: string; segments: TextSegment[] }
-  | { type: 'CLEAR_OUTPUT' };
+  | { type: 'CLEAR_OUTPUT' }
+  | { type: 'SET_STATUS_SEGMENTS'; segments: StatusSegment[] };
 
 export const initialState: AppState = {
   connection: {
@@ -57,6 +64,7 @@ export const initialState: AppState = {
     lines: [],
     maxLines: 1000,
   },
+  statusSegments: [],
 };
 
 export function appReducer(state: AppState, action: AppAction): AppState {
@@ -118,6 +126,12 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           ...state.output,
           lines: [],
         },
+      };
+
+    case 'SET_STATUS_SEGMENTS':
+      return {
+        ...state,
+        statusSegments: action.segments,
       };
 
     default:
