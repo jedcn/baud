@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Box, Text } from 'ink';
+import { Box } from 'ink';
 import { StatusArea } from './StatusArea.js';
 import { OutputArea } from './OutputArea.js';
 import { InputArea } from './InputArea.js';
@@ -187,9 +187,6 @@ export function App({ profile, scripts = [] }: AppProps) {
             statusFnRef.current = null;
             dispatch({ type: 'SET_STATUS_SEGMENTS', segments: [] });
           }
-        },
-        refreshStatus: () => {
-          evaluateStatus();
         },
       });
 
