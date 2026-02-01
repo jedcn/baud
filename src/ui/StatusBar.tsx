@@ -46,7 +46,7 @@ export function StatusBar() {
           backgroundColor={seg.bg}
           bold={seg.bold ?? false}
         >
-          {` ${seg.text} `}
+          {`${seg.text} `}
         </Text>
       );
 
