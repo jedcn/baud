@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Box } from 'ink';
 import { StatusArea } from './StatusArea.js';
 import { OutputArea } from './OutputArea.js';
@@ -38,8 +38,6 @@ export function App({ profile, scripts = [] }: AppProps) {
         const segments: StatusSegment[] = result.map((s: any) => ({
           text: String(s.text ?? ''),
           fg: s.fg,
-          bg: s.bg,
-          bold: s.bold,
         }));
         dispatch({ type: 'SET_STATUS_SEGMENTS', segments });
       }
@@ -179,8 +177,6 @@ export function App({ profile, scripts = [] }: AppProps) {
             const segments: StatusSegment[] = segmentsOrFunction.map((s: any) => ({
               text: String(s.text ?? ''),
               fg: s.fg,
-              bg: s.bg,
-              bold: s.bold,
             }));
             dispatch({ type: 'SET_STATUS_SEGMENTS', segments });
           } else {

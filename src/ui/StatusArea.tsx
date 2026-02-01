@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 import { Box, Text } from 'ink';
 import { useAppState } from '../state/StateContext.js';
 
@@ -35,7 +35,7 @@ export function StatusArea() {
 
   // If custom segments are set via Lua, render those
   if (segments.length > 0) {
-    const elements: React.ReactNode[] = [];
+    const elements: ReactNode[] = [];
 
     for (let i = 0; i < segments.length; i++) {
       const seg = segments[i];
@@ -43,8 +43,6 @@ export function StatusArea() {
         <Text
           key={`seg-${i}`}
           color={seg.fg ?? 'green'}
-          backgroundColor={seg.bg}
-          bold={seg.bold ?? false}
         >
           {`${seg.text} `}
         </Text>

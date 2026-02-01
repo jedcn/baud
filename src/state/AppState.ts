@@ -32,8 +32,6 @@ export interface ConnectionProfile {
 export interface StatusSegment {
   text: string;
   fg?: string;
-  bg?: string;
-  bold?: boolean;
 }
 
 export interface AppState {
