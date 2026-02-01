@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Box } from 'ink';
+import { Box, Text } from 'ink';
 import { StatusBar } from './StatusBar.js';
 import { OutputArea } from './OutputArea.js';
 import { InputArea } from './InputArea.js';
@@ -298,8 +298,11 @@ export function App({ profile, scripts = [] }: AppProps) {
   return (
     <Box flexDirection="column" height="100%">
       <OutputArea />
-      <InputArea onSubmit={handleSubmit} />
-      <StatusBar />
+      <Box flexDirection="column" borderStyle="round" borderColor="cyan" flexShrink={0}>
+        <InputArea onSubmit={handleSubmit} />
+        <Box borderStyle="single" borderColor="gray" borderBottom={false} borderLeft={false} borderRight={false} />
+        <StatusBar />
+      </Box>
     </Box>
   );
 }

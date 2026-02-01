@@ -53,7 +53,7 @@ export function StatusBar() {
     }
 
     return (
-      <Box borderStyle="round" borderColor="cyan" paddingX={1} flexShrink={0}>
+      <Box paddingX={1} flexShrink={0}>
         {elements}
       </Box>
     );
@@ -61,7 +61,7 @@ export function StatusBar() {
 
   // Default: show connection status
   return (
-    <Box borderStyle="round" borderColor="cyan" paddingX={1} flexShrink={0}>
+    <Box paddingX={1} flexShrink={0}>
       <Text color={getStatusColor()}>{getStatusText()}</Text>
     </Box>
   );
