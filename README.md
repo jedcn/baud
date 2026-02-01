@@ -4,10 +4,10 @@ A terminal-based MUD/BBS client with Lua scripting support, built with TypeScrip
 
 ## Features
 
-- **Telnet & SSH connections** - Connect to MUDs and BBSs via telnet or SSH
+- **Telnet** - Connect to MUDs and BBSs via telnet
 - **Lua scripting** - Automate with Lua scripts (triggers, aliases, timers)
 - **ANSI color support** - Full color terminal output
-- **Dynamic UI** - Create gauges, panels, and status bars from Lua
+- **Dynamic UI** - Create dynamic text from Lua
 - **Modern architecture** - Built with TypeScript and React (Ink)
 
 ## Installation
