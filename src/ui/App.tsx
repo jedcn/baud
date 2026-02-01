@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Box } from 'ink';
 import { StatusArea } from './StatusArea.js';
 import { OutputArea } from './OutputArea.js';

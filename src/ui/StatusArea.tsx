@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 import { Box, Text } from 'ink';
 import { useAppState } from '../state/StateContext.js';
 
