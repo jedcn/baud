@@ -48,6 +48,8 @@ describe('Timers', () => {
       disableTimer: (id: string) => {
         timerManager.disableTimer(id);
       },
+      setStatus: () => {},
+      cecho: () => {},
     });
 
     await luaEngine.initialize();

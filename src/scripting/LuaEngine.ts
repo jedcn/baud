@@ -16,6 +16,7 @@ export interface TimerInfo {
 export interface LuaAPI {
   send: (text: string) => void;
   echo: (text: string) => void;
+  cecho: (color: string, text: string) => void;
   createTrigger: (pattern: string, callback: LuaCallback, options?: any) => string;
   createAlias: (pattern: string, callback: LuaCallback, options?: any) => string;
   createTimer: (interval: number, callback: LuaCallback, options?: any) => string;
@@ -60,6 +61,7 @@ export class LuaEngine {
     this.engine.global.set('enableTimer', this.api.enableTimer);
     this.engine.global.set('disableTimer', this.api.disableTimer);
     this.engine.global.set('setStatus', this.api.setStatus);
+    this.engine.global.set('cecho', this.api.cecho);
   }
 
   /**
