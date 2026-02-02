@@ -33,6 +33,8 @@ describe('Aliases', () => {
       removeTimer: () => false,
       enableTimer: () => {},
       disableTimer: () => {},
+      setStatus: () => {},
+      cecho: () => {},
     });
 
     await luaEngine.initialize();

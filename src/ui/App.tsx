@@ -140,6 +140,10 @@ export function App({ profile, scripts = [] }: AppProps) {
           const segments = [{ text }];
           dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: text, segments });
         },
+        cecho: (color: string, text: string) => {
+          const segments = [{ text, color }];
+          dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: text, segments });
+        },
         createTrigger: (pattern: string, callback: any, options?: any) => {
           return triggerManager.createTrigger(pattern, callback, options);
         },

@@ -33,6 +33,10 @@ describe('Triggers', () => {
       removeTimer: () => false,
       enableTimer: () => {},
       disableTimer: () => {},
+      setStatus: () => {},
+      cecho: (color: string, text: string) => {
+        echoedMessages.push(`[${color}]${text}`);
+      },
     });
 
     await luaEngine.initialize();
@@ -254,6 +258,26 @@ describe('Triggers', () => {
     await triggerManager.processLine('test');
 
     expect(echoedMessages).toContain('Value: no match');
+  });
+
+  test('cecho outputs colored text', async () => {
+    await luaEngine.execute(`
+      cecho("red", "Danger!")
+    `);
+
+    expect(echoedMessages).toContain('[red]Danger!');
+  });
+
+  test('cecho from trigger callback', async () => {
+    await luaEngine.execute(`
+      createTrigger("damage", function()
+        cecho("red", "You took damage!")
+      end)
+    `);
+
+    await triggerManager.processLine('You take 10 damage');
+
+    expect(echoedMessages).toContain('[red]You took damage!');
   });
 
   test('matches[1] contains full matched string in trigger', async () => {
