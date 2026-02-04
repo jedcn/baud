@@ -8,6 +8,7 @@ import { TelnetConnection } from '../connection/TelnetConnection.js';
 import { ANSIParser } from '../connection/ANSIParser.js';
 import { LuaEngine } from '../scripting/LuaEngine.js';
 import { ScriptLoader } from '../scripting/ScriptLoader.js';
+import { evaluateStatusFn } from './evaluateStatusFn.js';
 import { TriggerManager } from '../triggers/TriggerManager.js';
 import { AliasManager } from '../aliases/AliasManager.js';
 import { TimerManager } from '../timers/TimerManager.js';
@@ -32,18 +33,8 @@ export function App({ profile, scripts = [] }: AppProps) {
   const evaluateStatus = () => {
     const fn = statusFnRef.current;
     if (!fn) return;
-    try {
-      const result = fn();
-      if (Array.isArray(result)) {
-        const segments: StatusSegment[] = result.map((s: any) => ({
-          text: String(s.text ?? ''),
-          fg: s.fg,
-        }));
-        dispatch({ type: 'SET_STATUS_SEGMENTS', segments });
-      }
-    } catch {
-      // Silently ignore status evaluation errors
-    }
+    const segments = evaluateStatusFn(fn);
+    dispatch({ type: 'SET_STATUS_SEGMENTS', segments });
   };
 
   // Error handler for Lua script errors
