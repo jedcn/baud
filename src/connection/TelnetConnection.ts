@@ -37,6 +37,7 @@ export class TelnetConnection extends ConnectionManager {
         port: profile.port,
         negotiationMandatory: false,
         timeout: 5000,
+        sendTimeout: 0,
       });
 
       this.connected = true;
