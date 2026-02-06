@@ -25,6 +25,7 @@ export interface LuaAPI {
   enableTimer: (id: string) => void;
   disableTimer: (id: string) => void;
   setStatus: (segmentsOrFunction: any) => void;
+  reloadScript: () => Promise<void>;
 }
 
 export class LuaEngine {
@@ -62,6 +63,7 @@ export class LuaEngine {
     this.engine.global.set('disableTimer', this.api.disableTimer);
     this.engine.global.set('setStatus', this.api.setStatus);
     this.engine.global.set('cecho', this.api.cecho);
+    this.engine.global.set('reloadScript', this.api.reloadScript);
   }
 
   /**

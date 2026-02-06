@@ -179,6 +179,41 @@ export function App({ profile, scripts = [] }: AppProps) {
             dispatch({ type: 'SET_STATUS_SEGMENTS', segments: [] });
           }
         },
+        reloadScript: async () => {
+          // Clear all triggers, aliases, and timers
+          triggerManager.clearTriggers();
+          aliasManager.clearAliases();
+          timerManager.clearTimers();
+
+          // Reload all scripts
+          if (scripts.length > 0) {
+            const loader = new ScriptLoader(engine);
+            const results = await loader.loadScripts(scripts);
+
+            // Report script loading results
+            for (const result of results) {
+              if (result.success) {
+                dispatch({
+                  type: 'OUTPUT_LINE_RECEIVED',
+                  line: `Reloaded script: ${result.path}`,
+                  segments: [{ text: `Reloaded script: ${result.path}`, color: '#00ff00' }],
+                });
+              } else {
+                dispatch({
+                  type: 'OUTPUT_LINE_RECEIVED',
+                  line: `Script error: ${result.error}`,
+                  segments: [{ text: `Script error: ${result.error}`, color: '#ff0000' }],
+                });
+              }
+            }
+          } else {
+            dispatch({
+              type: 'OUTPUT_LINE_RECEIVED',
+              line: 'No scripts to reload',
+              segments: [{ text: 'No scripts to reload', color: '#ffff00' }],
+            });
+          }
+        },
       });
 
       // Set error handler for timers
