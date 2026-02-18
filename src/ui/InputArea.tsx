@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { useLineEditor } from './hooks/useLineEditor.js';
 import { useCommandHistory } from './hooks/useCommandHistory.js';
+import { useAppState } from '../state/StateContext.js';
 
 interface InputAreaProps {
   onSubmit: (text: string) => void | Promise<void>;
@@ -10,6 +11,7 @@ interface InputAreaProps {
 export function InputArea({ onSubmit }: InputAreaProps) {
   const editor = useLineEditor();
   const history = useCommandHistory();
+  const { dispatch } = useAppState();
 
   useInput((inputChar, key) => {
     // Enter key - submit command
@@ -91,6 +93,14 @@ export function InputArea({ onSubmit }: InputAreaProps) {
     // CTRL-D - delete character at cursor (forward delete)
     if (key.ctrl && inputChar === 'd') {
       editor.deleteChar();
+      return;
+    }
+
+    // CTRL-L - clear screen
+    if (key.ctrl && inputChar === 'l') {
+      // Clear the physical terminal screen (ANSI escape: clear screen + move cursor home)
+      process.stdout.write('\x1B[2J\x1B[H');
+      dispatch({ type: 'CLEAR_OUTPUT' });
       return;
     }
 
