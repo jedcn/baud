@@ -308,7 +308,12 @@ export function App({ profile, scripts = [] }: AppProps) {
     // Process aliases with error handling
     const aliasMatched = await aliasManager.processInput(text, handleLuaError);
     if (aliasMatched) {
-      // Alias consumed the input
+      // Echo the alias input so user sees what they typed
+      dispatch({
+        type: 'OUTPUT_LINE_RECEIVED',
+        line: text,
+        segments: [{ text: text, color: '#00ffff' }],
+      });
       return;
     }
 
