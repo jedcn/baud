@@ -538,6 +538,7 @@ bun test --coverage
 ### Basic Input
 - **Type and press Enter** - Send command to server
 - **Backspace** - Delete character before cursor
+- **CTRL-L** - Clear screen
 - **CTRL-C** - Exit
 
 ### Command History
