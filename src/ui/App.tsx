@@ -10,6 +10,7 @@ import { LuaEngine } from '../scripting/LuaEngine.js';
 import { ScriptLoader } from '../scripting/ScriptLoader.js';
 import { evaluateStatusFn } from './evaluateStatusFn.js';
 import { TriggerManager } from '../triggers/TriggerManager.js';
+import { OutboundTriggerManager } from '../triggers/OutboundTriggerManager.js';
 import { AliasManager } from '../aliases/AliasManager.js';
 import { TimerManager } from '../timers/TimerManager.js';
 import type { ConnectionProfile, StatusSegment } from '../state/AppState.js';
@@ -26,6 +27,7 @@ export function App({ profile, scripts = [] }: AppProps) {
   const connectionRef = useRef(state.connection.currentConnection);
   const statusFnRef = useRef<(() => any) | null>(null);
   const triggerManager = useMemo(() => new TriggerManager(), []);
+  const outboundTriggerManager = useMemo(() => new OutboundTriggerManager(), []);
   const aliasManager = useMemo(() => new AliasManager(), []);
   const timerManager = useMemo(() => new TimerManager(), []);
 
@@ -122,6 +124,8 @@ export function App({ profile, scripts = [] }: AppProps) {
     const initLua = async () => {
       const engine = new LuaEngine({
         send: (text: string) => {
+          // Process outbound triggers before sending
+          outboundTriggerManager.processCommand(text, handleLuaError);
           if (connectionRef.current) {
             connectionRef.current.send(text);
           }
@@ -137,6 +141,9 @@ export function App({ profile, scripts = [] }: AppProps) {
         },
         createTrigger: (pattern: string, callback: any, options?: any) => {
           return triggerManager.createTrigger(pattern, callback, options);
+        },
+        createOutboundTrigger: (pattern: string, callback: any, options?: any) => {
+          return outboundTriggerManager.createOutboundTrigger(pattern, callback, options);
         },
         createAlias: (pattern: string, callback: any, options?: any) => {
           return aliasManager.createAlias(pattern, callback, options);
@@ -182,6 +189,7 @@ export function App({ profile, scripts = [] }: AppProps) {
         reloadScript: async () => {
           // Clear all triggers, aliases, and timers
           triggerManager.clearTriggers();
+          outboundTriggerManager.clearOutboundTriggers();
           aliasManager.clearAliases();
           timerManager.clearTimers();
 
@@ -317,8 +325,9 @@ export function App({ profile, scripts = [] }: AppProps) {
       return;
     }
 
-    // Normal command - send to server
+    // Normal command - process outbound triggers and send to server
     if (state.connection.currentConnection) {
+      await outboundTriggerManager.processCommand(text, handleLuaError);
       state.connection.currentConnection.send(text);
     }
   };
