@@ -89,9 +89,9 @@ export function InputArea({ onSubmit, initialHistory, onHistoryChange }: InputAr
       return;
     }
 
-    // CTRL-S - also starts search (can then use CTRL-S to search forward)
+    // CTRL-S - start forward search
     if (key.ctrl && inputChar === 's') {
-      history.startSearch(editor.text);
+      history.startSearch(editor.text, 'forward');
       return;
     }
 
@@ -208,9 +208,10 @@ export function InputArea({ onSubmit, initialHistory, onHistoryChange }: InputAr
   // Search mode rendering
   if (history.isSearching) {
     const match = history.searchMatch ?? '';
+    const label = history.searchDirection === 'backward' ? 'reverse-i-search' : 'forward-i-search';
     return (
       <Box paddingX={1}>
-        <Text color="yellow">(reverse-i-search)`</Text>
+        <Text color="yellow">({label})`</Text>
         <Text color="cyan">{history.searchQuery}</Text>
         <Text color="yellow">':</Text>
         <Text> {match}</Text>

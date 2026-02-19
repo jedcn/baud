@@ -10,9 +10,10 @@ export interface UseCommandHistoryResult {
   resetPosition: () => void;
   // Search functionality
   isSearching: boolean;
+  searchDirection: 'backward' | 'forward';
   searchQuery: string;
   searchMatch: string | undefined;
-  startSearch: (currentInput: string) => void;
+  startSearch: (currentInput: string, direction?: 'backward' | 'forward') => void;
   updateSearchQuery: (query: string) => void;
   findNextMatch: () => void;
   findPreviousMatch: () => void;
@@ -34,6 +35,7 @@ export function useCommandHistory(options: UseCommandHistoryOptions = {}): UseCo
   const [searchQuery, setSearchQuery] = useState('');
   const [searchMatchIndex, setSearchMatchIndex] = useState<number | null>(null);
   const [savedInput, setSavedInput] = useState('');
+  const [searchDirection, setSearchDirection] = useState<'backward' | 'forward'>('backward');
 
   const addCommand = useCallback((command: string) => {
     if (command.trim().length === 0) return;
@@ -109,10 +111,11 @@ export function useCommandHistory(options: UseCommandHistoryOptions = {}): UseCo
     [history]
   );
 
-  // Start reverse search mode
-  const startSearch = useCallback((currentInput: string) => {
+  // Start search mode
+  const startSearch = useCallback((currentInput: string, direction: 'backward' | 'forward' = 'backward') => {
     setSavedInput(currentInput);
     setIsSearching(true);
+    setSearchDirection(direction);
     setSearchQuery('');
     setSearchMatchIndex(null);
   }, []);
@@ -134,6 +137,7 @@ export function useCommandHistory(options: UseCommandHistoryOptions = {}): UseCo
 
   // Find the next older match (CTRL-R again)
   const findNextMatch = useCallback(() => {
+    setSearchDirection('backward');
     if (searchQuery.length === 0 || searchMatchIndex === null) return;
     // Search from one before the current match
     const nextMatchIndex = findMatchBackward(searchQuery, searchMatchIndex - 1);
@@ -145,6 +149,7 @@ export function useCommandHistory(options: UseCommandHistoryOptions = {}): UseCo
 
   // Find the next newer match (CTRL-S)
   const findPreviousMatch = useCallback(() => {
+    setSearchDirection('forward');
     if (searchQuery.length === 0 || searchMatchIndex === null) return;
     // Search from one after the current match
     const nextMatchIndex = findMatchForward(searchQuery, searchMatchIndex + 1);
@@ -181,6 +186,7 @@ export function useCommandHistory(options: UseCommandHistoryOptions = {}): UseCo
     resetPosition,
     // Search functionality
     isSearching,
+    searchDirection,
     searchQuery,
     searchMatch,
     startSearch,
