@@ -6,11 +6,13 @@ import { useAppState } from '../state/StateContext.js';
 
 interface InputAreaProps {
   onSubmit: (text: string) => void | Promise<void>;
+  initialHistory?: string[];
+  onHistoryChange?: (commands: string[]) => void;
 }
 
-export function InputArea({ onSubmit }: InputAreaProps) {
+export function InputArea({ onSubmit, initialHistory, onHistoryChange }: InputAreaProps) {
   const editor = useLineEditor();
-  const history = useCommandHistory();
+  const history = useCommandHistory({ initialHistory, onHistoryChange });
   const { dispatch } = useAppState();
 
   useInput((inputChar, key) => {

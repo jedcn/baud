@@ -19,8 +19,14 @@ export interface UseCommandHistoryResult {
   exitSearch: (accept: boolean) => string;
 }
 
-export function useCommandHistory(): UseCommandHistoryResult {
-  const [history, setHistory] = useState<string[]>([]);
+interface UseCommandHistoryOptions {
+  initialHistory?: string[];
+  onHistoryChange?: (commands: string[]) => void;
+}
+
+export function useCommandHistory(options: UseCommandHistoryOptions = {}): UseCommandHistoryResult {
+  const { initialHistory = [], onHistoryChange } = options;
+  const [history, setHistory] = useState<string[]>(initialHistory);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
   // Search state
@@ -37,10 +43,12 @@ export function useCommandHistory(): UseCommandHistoryResult {
       if (prev.length > 0 && prev[prev.length - 1] === command) {
         return prev;
       }
-      return [...prev, command];
+      const updated = [...prev, command];
+      onHistoryChange?.(updated);
+      return updated;
     });
     setHistoryIndex(-1);
-  }, []);
+  }, [onHistoryChange]);
 
   const navigateUp = useCallback(() => {
     setHistoryIndex((current) => {
