@@ -22,10 +22,6 @@ export class OutboundTriggerManager {
   ): string {
     const trigger = new Trigger(pattern, callback, options);
     this.triggers.push(trigger);
-
-    // Sort by priority (higher priority first)
-    this.triggers.sort((a, b) => b.priority - a.priority);
-
     return trigger.id;
   }
 

@@ -33,11 +33,6 @@ createTrigger("^(\\w+) tells you", function(matches)
   echo(">>> Message from: " .. player)
 end, { type = "regex" })
 
--- Gag trigger: hide spam messages
-createTrigger("The shopkeeper yawns.", function()
-  -- This line will be hidden from output
-end, { gag = true })
-
 -- Simple alias: expand "gg" to "say Good game!"
 createAlias("^gg$", function()
   send("say Good game, everyone!")

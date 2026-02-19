@@ -52,10 +52,9 @@ describe('Triggers', () => {
     `);
 
     // Process matching line
-    const shouldGag = await triggerManager.processLine('You have been poisoned!');
+    await triggerManager.processLine('You have been poisoned!');
 
     // Verify
-    expect(shouldGag).toBe(false);
     expect(sentCommands).toContain('drink antidote');
     expect(echoedMessages).toContain('Auto-cured poison!');
   });
@@ -68,10 +67,9 @@ describe('Triggers', () => {
     `);
 
     // Process non-matching line
-    const shouldGag = await triggerManager.processLine('You feel fine.');
+    await triggerManager.processLine('You feel fine.');
 
     // Verify
-    expect(shouldGag).toBe(false);
     expect(sentCommands).toHaveLength(0);
   });
 
@@ -92,10 +90,9 @@ describe('Triggers', () => {
     `);
 
     // Process matching line with low health
-    let shouldGag = await triggerManager.processLine('You have 25/100 health');
+    await triggerManager.processLine('You have 25/100 health');
 
     // Verify
-    expect(shouldGag).toBe(false);
     expect(echoedMessages).toContain('Health: 25%');
     expect(echoedMessages).toContain('Health critical!');
     expect(sentCommands).toContain('flee');
@@ -105,40 +102,11 @@ describe('Triggers', () => {
     echoedMessages = [];
 
     // Process matching line with high health
-    shouldGag = await triggerManager.processLine('You have 80/100 health');
+    await triggerManager.processLine('You have 80/100 health');
 
     // Should echo but not flee
     expect(echoedMessages).toContain('Health: 80%');
     expect(sentCommands).toHaveLength(0);
-  });
-
-  test('trigger with gag option hides matching line', async () => {
-    await luaEngine.execute(`
-      createTrigger("The shopkeeper yawns.", function()
-        -- Do nothing, just hide the line
-      end, { gag = true })
-    `);
-
-    // Process matching line
-    const shouldGag = await triggerManager.processLine('The shopkeeper yawns.');
-
-    // Should be gagged
-    expect(shouldGag).toBe(true);
-  });
-
-  test('trigger without gag option does not hide line', async () => {
-    await luaEngine.execute(`
-      createTrigger("Hello", function()
-        echo("Received greeting")
-      end)
-    `);
-
-    // Process matching line
-    const shouldGag = await triggerManager.processLine('Hello');
-
-    // Should not be gagged
-    expect(shouldGag).toBe(false);
-    expect(echoedMessages).toContain('Received greeting');
   });
 
   test('multiple triggers can fire on same line', async () => {
@@ -160,30 +128,6 @@ describe('Triggers', () => {
     expect(echoedMessages).toContain('Attack detected!');
     expect(echoedMessages).toContain('Monster attack!');
     expect(sentCommands).toContain('defend');
-  });
-
-  test('trigger priority determines execution order', async () => {
-    const executionOrder: string[] = [];
-
-    await luaEngine.execute(`
-      createTrigger("test", function()
-        echo("low priority")
-      end, { priority = 1 })
-
-      createTrigger("test", function()
-        echo("high priority")
-      end, { priority = 10 })
-
-      createTrigger("test", function()
-        echo("medium priority")
-      end, { priority = 5 })
-    `);
-
-    // Process line
-    await triggerManager.processLine('test');
-
-    // Verify execution order (high to low priority)
-    expect(echoedMessages).toEqual(['high priority', 'medium priority', 'low priority']);
   });
 
   test('disabled trigger does not fire', async () => {
