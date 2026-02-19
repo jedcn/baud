@@ -7,6 +7,7 @@ A terminal-based MUD/BBS client with Lua scripting support, built with TypeScrip
 - **Telnet** - Connect to MUDs and BBSs via telnet
 - **Lua scripting** - Automate with Lua scripts (triggers, aliases, timers)
 - **ANSI color support** - Full color terminal output
+- **Persistent command history** - Commands survive across sessions, with CTRL-R/CTRL-S reverse search
 - **Dynamic UI** - Create dynamic text from Lua
 - **Modern architecture** - Built with TypeScript and React (Ink)
 
@@ -522,7 +523,8 @@ bun test --coverage
 - ✅ CLI argument parsing
 
 **Phase 2 Complete** - Enhanced Input/Output
-- ✅ Command history with up/down arrows and CTRL-P/CTRL-N
+- ✅ Command history with up/down arrows and CTRL-P/CTRL-N (persists across sessions)
+- ✅ Reverse/forward history search with CTRL-R/CTRL-S
 - ✅ Line editing (arrow keys, CTRL-A/E/B/F/K/D/U)
 - ✅ ANSI color parsing (256-color support)
 - ✅ CP437 character encoding for BBS compatibility
@@ -571,6 +573,8 @@ bun test --coverage
 ### Command History
 - **Up Arrow / CTRL-P** - Navigate to previous command
 - **Down Arrow / CTRL-N** - Navigate to next command
+- **CTRL-R** - Reverse search through history (type to search, CTRL-R for older match, CTRL-S for newer match, Enter to accept, ESC to cancel)
+- **CTRL-S** - Forward search through history (same controls as CTRL-R)
 
 ### Line Editing
 - **Left Arrow / CTRL-B** - Move cursor left

@@ -6,14 +6,95 @@ import { useAppState } from '../state/StateContext.js';
 
 interface InputAreaProps {
   onSubmit: (text: string) => void | Promise<void>;
+  initialHistory?: string[];
+  onHistoryChange?: (commands: string[]) => void;
 }
 
-export function InputArea({ onSubmit }: InputAreaProps) {
+export function InputArea({ onSubmit, initialHistory, onHistoryChange }: InputAreaProps) {
   const editor = useLineEditor();
-  const history = useCommandHistory();
+  const history = useCommandHistory({ initialHistory, onHistoryChange });
   const { dispatch } = useAppState();
 
   useInput((inputChar, key) => {
+    // Search mode handling
+    if (history.isSearching) {
+      // ESC or CTRL-G - cancel search
+      if (key.escape || (key.ctrl && inputChar === 'g')) {
+        const restored = history.exitSearch(false);
+        editor.setText(restored);
+        editor.setCursor(restored.length);
+        return;
+      }
+
+      // Enter - accept match and execute
+      if (key.return) {
+        const match = history.exitSearch(true);
+        if (match.length > 0) {
+          history.addCommand(match);
+          onSubmit(match);
+        }
+        editor.clear();
+        return;
+      }
+
+      // CTRL-R again - find next older match
+      if (key.ctrl && inputChar === 'r') {
+        history.findNextMatch();
+        return;
+      }
+
+      // CTRL-S - find next newer match (forward search)
+      if (key.ctrl && inputChar === 's') {
+        history.findPreviousMatch();
+        return;
+      }
+
+      // Arrow keys - exit search but keep match
+      if (key.upArrow || key.downArrow || key.leftArrow || key.rightArrow) {
+        const match = history.exitSearch(true);
+        editor.setText(match);
+        editor.setCursor(match.length);
+        // Don't return - let arrow keys do their normal behavior after
+        if (key.upArrow) {
+          history.navigateUp();
+          return;
+        }
+        if (key.downArrow) {
+          history.navigateDown();
+          return;
+        }
+        return;
+      }
+
+      // Backspace - remove last character from search query
+      if (key.backspace || key.delete) {
+        history.updateSearchQuery(history.searchQuery.slice(0, -1));
+        return;
+      }
+
+      // Regular character - add to search query
+      if (!key.ctrl && !key.meta && inputChar) {
+        history.updateSearchQuery(history.searchQuery + inputChar);
+        return;
+      }
+
+      return;
+    }
+
+    // Normal mode handling
+
+    // CTRL-R - start reverse search
+    if (key.ctrl && inputChar === 'r') {
+      history.startSearch(editor.text);
+      return;
+    }
+
+    // CTRL-S - start forward search
+    if (key.ctrl && inputChar === 's') {
+      history.startSearch(editor.text, 'forward');
+      return;
+    }
+
     // Enter key - submit command
     if (key.return) {
       onSubmit(editor.text);
@@ -124,7 +205,21 @@ export function InputArea({ onSubmit }: InputAreaProps) {
     }
   }, [history.currentCommand]);
 
-  // Render text with cursor at the correct position
+  // Search mode rendering
+  if (history.isSearching) {
+    const match = history.searchMatch ?? '';
+    const label = history.searchDirection === 'backward' ? 'reverse-i-search' : 'forward-i-search';
+    return (
+      <Box paddingX={1}>
+        <Text color="yellow">({label})`</Text>
+        <Text color="cyan">{history.searchQuery}</Text>
+        <Text color="yellow">':</Text>
+        <Text> {match}</Text>
+      </Box>
+    );
+  }
+
+  // Normal mode rendering
   const textBefore = editor.text.slice(0, editor.cursor);
   const cursorChar = editor.cursor < editor.text.length ? editor.text[editor.cursor] : ' ';
   const textAfter = editor.text.slice(editor.cursor + 1);

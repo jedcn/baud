@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box } from 'ink';
 import { StatusArea } from './StatusArea.js';
 import { OutputArea } from './OutputArea.js';
@@ -13,14 +13,16 @@ import { TriggerManager } from '../triggers/TriggerManager.js';
 import { OutboundTriggerManager } from '../triggers/OutboundTriggerManager.js';
 import { AliasManager } from '../aliases/AliasManager.js';
 import { TimerManager } from '../timers/TimerManager.js';
+import { CommandHistoryManager } from '../history/CommandHistoryManager.js';
 import type { ConnectionProfile, StatusSegment } from '../state/AppState.js';
 
 interface AppProps {
   profile?: ConnectionProfile;
   scripts?: string[];
+  initialHistory?: string[];
 }
 
-export function App({ profile, scripts = [] }: AppProps) {
+export function App({ profile, scripts = [], initialHistory = [] }: AppProps) {
   const { state, dispatch } = useAppState();
   const ansiParser = useMemo(() => new ANSIParser(), []);
   const [luaEngine, setLuaEngine] = useState<LuaEngine | null>(null);
@@ -30,6 +32,11 @@ export function App({ profile, scripts = [] }: AppProps) {
   const outboundTriggerManager = useMemo(() => new OutboundTriggerManager(), []);
   const aliasManager = useMemo(() => new AliasManager(), []);
   const timerManager = useMemo(() => new TimerManager(), []);
+  const historyManager = useMemo(() => CommandHistoryManager.getInstance(), []);
+
+  const handleHistoryChange = useCallback((commands: string[]) => {
+    historyManager.save(commands).catch(() => {});
+  }, [historyManager]);
 
   // Evaluate the stored status function and dispatch segments
   const evaluateStatus = () => {
@@ -330,7 +337,7 @@ export function App({ profile, scripts = [] }: AppProps) {
     <Box flexDirection="column" height="100%">
       <OutputArea />
       <Box flexDirection="column" borderStyle="round" borderColor="cyan" flexShrink={0}>
-        <InputArea onSubmit={handleSubmit} />
+        <InputArea onSubmit={handleSubmit} initialHistory={initialHistory} onHistoryChange={handleHistoryChange} />
         <Box borderStyle="single" borderColor="gray" borderBottom={false} borderLeft={false} borderRight={false} />
         <StatusArea />
       </Box>

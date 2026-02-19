@@ -4,6 +4,7 @@ import { render } from 'ink';
 import { App } from './ui/App.js';
 import { StateProvider } from './state/StateContext.js';
 import { ConfigManager } from './config/ConfigManager.js';
+import { CommandHistoryManager } from './history/CommandHistoryManager.js';
 import type { ConnectionProfile } from './state/AppState.js';
 
 async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: string[] }> {
@@ -96,9 +97,10 @@ Examples:
 }
 
 const { profile, scripts } = await parseArgs();
+const initialHistory = await CommandHistoryManager.getInstance().load();
 
 render(
   <StateProvider>
-    <App profile={profile} scripts={scripts} />
+    <App profile={profile} scripts={scripts} initialHistory={initialHistory} />
   </StateProvider>
 );

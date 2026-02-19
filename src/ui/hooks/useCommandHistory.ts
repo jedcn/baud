@@ -8,11 +8,34 @@ export interface UseCommandHistoryResult {
   navigateUp: () => void;
   navigateDown: () => void;
   resetPosition: () => void;
+  // Search functionality
+  isSearching: boolean;
+  searchDirection: 'backward' | 'forward';
+  searchQuery: string;
+  searchMatch: string | undefined;
+  startSearch: (currentInput: string, direction?: 'backward' | 'forward') => void;
+  updateSearchQuery: (query: string) => void;
+  findNextMatch: () => void;
+  findPreviousMatch: () => void;
+  exitSearch: (accept: boolean) => string;
 }
 
-export function useCommandHistory(): UseCommandHistoryResult {
-  const [history, setHistory] = useState<string[]>([]);
+interface UseCommandHistoryOptions {
+  initialHistory?: string[];
+  onHistoryChange?: (commands: string[]) => void;
+}
+
+export function useCommandHistory(options: UseCommandHistoryOptions = {}): UseCommandHistoryResult {
+  const { initialHistory = [], onHistoryChange } = options;
+  const [history, setHistory] = useState<string[]>(initialHistory);
   const [historyIndex, setHistoryIndex] = useState(-1);
+
+  // Search state
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchMatchIndex, setSearchMatchIndex] = useState<number | null>(null);
+  const [savedInput, setSavedInput] = useState('');
+  const [searchDirection, setSearchDirection] = useState<'backward' | 'forward'>('backward');
 
   const addCommand = useCallback((command: string) => {
     if (command.trim().length === 0) return;
@@ -22,10 +45,12 @@ export function useCommandHistory(): UseCommandHistoryResult {
       if (prev.length > 0 && prev[prev.length - 1] === command) {
         return prev;
       }
-      return [...prev, command];
+      const updated = [...prev, command];
+      onHistoryChange?.(updated);
+      return updated;
     });
     setHistoryIndex(-1);
-  }, []);
+  }, [onHistoryChange]);
 
   const navigateUp = useCallback(() => {
     setHistoryIndex((current) => {
@@ -58,7 +83,98 @@ export function useCommandHistory(): UseCommandHistoryResult {
     setHistoryIndex(-1);
   }, []);
 
+  // Search backward through history for a query
+  const findMatchBackward = useCallback(
+    (query: string, startIndex: number): number | null => {
+      if (query.length === 0) return null;
+      for (let i = startIndex; i >= 0; i--) {
+        if (history[i].includes(query)) {
+          return i;
+        }
+      }
+      return null;
+    },
+    [history]
+  );
+
+  // Search forward through history for a query
+  const findMatchForward = useCallback(
+    (query: string, startIndex: number): number | null => {
+      if (query.length === 0) return null;
+      for (let i = startIndex; i < history.length; i++) {
+        if (history[i].includes(query)) {
+          return i;
+        }
+      }
+      return null;
+    },
+    [history]
+  );
+
+  // Start search mode
+  const startSearch = useCallback((currentInput: string, direction: 'backward' | 'forward' = 'backward') => {
+    setSavedInput(currentInput);
+    setIsSearching(true);
+    setSearchDirection(direction);
+    setSearchQuery('');
+    setSearchMatchIndex(null);
+  }, []);
+
+  // Update search query and find match
+  const updateSearchQuery = useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+      if (query.length === 0) {
+        setSearchMatchIndex(null);
+        return;
+      }
+      // Search from the most recent command
+      const matchIndex = findMatchBackward(query, history.length - 1);
+      setSearchMatchIndex(matchIndex);
+    },
+    [findMatchBackward, history.length]
+  );
+
+  // Find the next older match (CTRL-R again)
+  const findNextMatch = useCallback(() => {
+    setSearchDirection('backward');
+    if (searchQuery.length === 0 || searchMatchIndex === null) return;
+    // Search from one before the current match
+    const nextMatchIndex = findMatchBackward(searchQuery, searchMatchIndex - 1);
+    if (nextMatchIndex !== null) {
+      setSearchMatchIndex(nextMatchIndex);
+    }
+    // If no more matches, stay on current match (could wrap around instead)
+  }, [searchQuery, searchMatchIndex, findMatchBackward]);
+
+  // Find the next newer match (CTRL-S)
+  const findPreviousMatch = useCallback(() => {
+    setSearchDirection('forward');
+    if (searchQuery.length === 0 || searchMatchIndex === null) return;
+    // Search from one after the current match
+    const nextMatchIndex = findMatchForward(searchQuery, searchMatchIndex + 1);
+    if (nextMatchIndex !== null) {
+      setSearchMatchIndex(nextMatchIndex);
+    }
+    // If no more matches, stay on current match
+  }, [searchQuery, searchMatchIndex, findMatchForward]);
+
+  // Exit search mode
+  const exitSearch = useCallback(
+    (accept: boolean): string => {
+      setIsSearching(false);
+      const result = accept && searchMatchIndex !== null ? history[searchMatchIndex] : savedInput;
+      setSearchQuery('');
+      setSearchMatchIndex(null);
+      setSavedInput('');
+      setHistoryIndex(-1);
+      return result;
+    },
+    [history, searchMatchIndex, savedInput]
+  );
+
   const currentCommand = historyIndex >= 0 ? history[historyIndex] : undefined;
+  const searchMatch = searchMatchIndex !== null ? history[searchMatchIndex] : undefined;
 
   return {
     history,
@@ -68,5 +184,15 @@ export function useCommandHistory(): UseCommandHistoryResult {
     navigateUp,
     navigateDown,
     resetPosition,
+    // Search functionality
+    isSearching,
+    searchDirection,
+    searchQuery,
+    searchMatch,
+    startSearch,
+    updateSearchQuery,
+    findNextMatch,
+    findPreviousMatch,
+    exitSearch,
   };
 }
