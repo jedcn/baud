@@ -209,6 +209,41 @@ end, { gag = true })
 - `priority` - Number for execution order (higher = first)
 - `gag` - `true` to hide matched lines, `false` (default)
 
+#### createOutboundTrigger(pattern, callback, options)
+Create a trigger that executes a Lua function when a command is sent to the server. This fires on both programmatic `send()` calls and user-typed commands.
+
+This is useful for tracking what commands are being sent, setting state before server responses arrive, or coordinating between outbound commands and inbound responses.
+
+**IMPORTANT:** When using regex patterns, escape backslashes in Lua strings! Use `\\d` not `\d`.
+
+```lua
+-- Track when rotation commands are sent
+createOutboundTrigger("^rot (-?\\d+)$", function(matches)
+  local amount = tonumber(matches[2])
+  if amount == 0 then
+    -- "rot 0" is a probe to check current heading
+    rotProbe = true
+    echo("[Rotation probe sent]")
+  else
+    -- Actual rotation - will take time
+    rotProbe = false
+    rotationInProgress = true
+    echo("[Rotating by " .. amount .. " degrees]")
+  end
+end, { type = "regex" })
+
+-- Track scan commands
+createOutboundTrigger("^scan planet (\\d+)$", function(matches)
+  scanningPlanet = tonumber(matches[2])
+  echo("[Scanning planet " .. scanningPlanet .. "]")
+end, { type = "regex" })
+```
+
+**Options:**
+- `type` - `"literal"` (default) or `"regex"`
+- `enabled` - `true` (default) or `false`
+- `priority` - Number for execution order (higher = first)
+
 #### createAlias(pattern, callback, options)
 Create an alias that executes a Lua function when user input matches a pattern.
 
@@ -544,6 +579,8 @@ bun test --coverage
 ### Command History
 - **Up Arrow / CTRL-P** - Navigate to previous command
 - **Down Arrow / CTRL-N** - Navigate to next command
+- **CTRL-R** - Reverse search through history (type to search, CTRL-R for older match, CTRL-S for newer match, Enter to accept, ESC to cancel)
+- **CTRL-S** - Forward search through history (same controls as CTRL-R)
 
 ### Line Editing
 - **Left Arrow / CTRL-B** - Move cursor left
