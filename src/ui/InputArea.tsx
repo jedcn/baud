@@ -131,6 +131,9 @@ export function InputArea({ onSubmit }: InputAreaProps) {
 
   return (
     <Box paddingX={1}>
+      {process.env.BAUD_DISPLAY_ON_PROMPT && (
+        <Text color="gray">{process.env.BAUD_DISPLAY_ON_PROMPT} </Text>
+      )}
       <Text color="cyan">&gt; </Text>
       <Text>{textBefore}</Text>
       <Text inverse>{cursorChar}</Text>
