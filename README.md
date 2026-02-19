@@ -579,6 +579,8 @@ bun test --coverage
 ### Command History
 - **Up Arrow / CTRL-P** - Navigate to previous command
 - **Down Arrow / CTRL-N** - Navigate to next command
+- **CTRL-R** - Reverse search through history (type to search, CTRL-R for older match, CTRL-S for newer match, Enter to accept, ESC to cancel)
+- **CTRL-S** - Forward search through history (same controls as CTRL-R)
 
 ### Line Editing
 - **Left Arrow / CTRL-B** - Move cursor left
