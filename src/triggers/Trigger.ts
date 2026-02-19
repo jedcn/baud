@@ -3,8 +3,6 @@ export type TriggerCallback = (matches?: string[]) => void | Promise<void>;
 export interface TriggerOptions {
   type?: 'literal' | 'regex';
   enabled?: boolean;
-  priority?: number;
-  gag?: boolean;
 }
 
 export class Trigger {
@@ -13,8 +11,6 @@ export class Trigger {
   public callback: TriggerCallback;
   public type: 'literal' | 'regex';
   public enabled: boolean;
-  public priority: number;
-  public gag: boolean;
   private regex?: RegExp;
 
   constructor(
@@ -27,8 +23,6 @@ export class Trigger {
     this.callback = callback;
     this.type = options.type || 'literal';
     this.enabled = options.enabled !== false;
-    this.priority = options.priority || 0;
-    this.gag = options.gag || false;
 
     // Compile regex if needed
     if (this.type === 'regex') {

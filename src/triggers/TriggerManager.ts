@@ -17,10 +17,6 @@ export class TriggerManager {
   ): string {
     const trigger = new Trigger(pattern, callback, options);
     this.triggers.push(trigger);
-
-    // Sort by priority (higher priority first)
-    this.triggers.sort((a, b) => b.priority - a.priority);
-
     return trigger.id;
   }
 
@@ -64,28 +60,18 @@ export class TriggerManager {
    * Process a line of text through all triggers
    * @param text - Text to process
    * @param onError - Optional error handler for Lua errors
-   * @returns True if the line should be gagged (hidden)
    */
   async processLine(
     text: string,
     onError?: (error: Error) => void
-  ): Promise<boolean> {
-    let shouldGag = false;
-
+  ): Promise<void> {
     for (const trigger of this.triggers) {
       const result = trigger.match(text);
       if (result.matched) {
         // Execute the trigger callback with error handling
         await trigger.execute(result.captures || [], onError);
-
-        // If this trigger has gag enabled, mark the line to be hidden
-        if (trigger.gag) {
-          shouldGag = true;
-        }
       }
     }
-
-    return shouldGag;
   }
 
   /**

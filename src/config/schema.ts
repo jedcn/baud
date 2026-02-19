@@ -71,8 +71,6 @@ export const TriggerSchema = z.object({
   pattern: z.string(),
   type: z.enum(['literal', 'regex']).default('literal'),
   enabled: z.boolean().default(true),
-  priority: z.number().int().default(0),
-  gag: z.boolean().default(false),
 });
 
 export type Trigger = z.infer<typeof TriggerSchema>;

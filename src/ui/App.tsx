@@ -62,15 +62,9 @@ export function App({ profile, scripts = [] }: AppProps) {
             const plainText = ansiParser.strip(line);
 
             // Process triggers with error handling
-            const shouldGag = await triggerManager.processLine(
-              plainText,
-              handleLuaError
-            );
+            await triggerManager.processLine(plainText, handleLuaError);
 
-            // Only display if not gagged
-            if (!shouldGag) {
-              dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: plainText, segments });
-            }
+            dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: plainText, segments });
           }
         }
 
