@@ -225,6 +225,9 @@ export function InputArea({ onSubmit, initialHistory, onHistoryChange }: InputAr
 
   return (
     <Box paddingX={1}>
+      {process.env.BAUD_DISPLAY_ON_PROMPT && (
+        <Text color="gray">{process.env.BAUD_DISPLAY_ON_PROMPT} </Text>
+      )}
       <Text color="cyan">&gt; </Text>
       <Text>{textBefore}</Text>
       <Text inverse>{cursorChar}</Text>

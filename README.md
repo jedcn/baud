@@ -198,17 +198,11 @@ createTrigger("^You have (\\d+)/(\\d+) health", function(matches)
   end
 end, { type = "regex" })
 
--- Gag trigger (hide matching lines)
-createTrigger("The shopkeeper yawns.", function()
-  -- This line will be hidden from output
-end, { gag = true })
 ```
 
 **Options:**
 - `type` - `"literal"` (default) or `"regex"`
 - `enabled` - `true` (default) or `false`
-- `priority` - Number for execution order (higher = first)
-- `gag` - `true` to hide matched lines, `false` (default)
 
 #### createOutboundTrigger(pattern, callback, options)
 Create a trigger that executes a Lua function when a command is sent to the server. This fires on both programmatic `send()` calls and user-typed commands.
@@ -243,7 +237,6 @@ end, { type = "regex" })
 **Options:**
 - `type` - `"literal"` (default) or `"regex"`
 - `enabled` - `true` (default) or `false`
-- `priority` - Number for execution order (higher = first)
 
 #### createAlias(pattern, callback, options)
 Create an alias that executes a Lua function when user input matches a pattern.
@@ -462,7 +455,6 @@ Then use it interactively:
 See `triggers.lua` for a comprehensive example showing:
 - Health monitoring with automatic flee
 - Message highlighting
-- Spam filtering with gag
 - Quick aliases for common commands
 - Complex aliases with state tracking
 
@@ -555,7 +547,7 @@ bun test --coverage
 - ✅ `createTrigger()` - Match server output with literal or regex patterns
 - ✅ `createAlias()` - Match user input with literal or regex patterns
 - ✅ Capture groups for dynamic pattern matching
-- ✅ Trigger options: priority, gag, enabled
+- ✅ Trigger options: enabled
 - ✅ Pure Lua implementation (no JSON!)
 - ✅ Comprehensive example script (triggers.lua)
 

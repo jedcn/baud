@@ -146,28 +146,6 @@ describe('Outbound Triggers', () => {
     expect(echoedMessages).toContain('Trigger 2: starts with rot');
   });
 
-  test('outbound trigger priority determines execution order', async () => {
-    await luaEngine.execute(`
-      createOutboundTrigger("test", function()
-        echo("low priority")
-      end, { priority = 1 })
-
-      createOutboundTrigger("test", function()
-        echo("high priority")
-      end, { priority = 10 })
-
-      createOutboundTrigger("test", function()
-        echo("medium priority")
-      end, { priority = 5 })
-    `);
-
-    // Process command
-    await outboundTriggerManager.processCommand('test');
-
-    // Verify execution order (high to low priority)
-    expect(echoedMessages).toEqual(['high priority', 'medium priority', 'low priority']);
-  });
-
   test('disabled outbound trigger does not fire', async () => {
     await luaEngine.execute(`
       createOutboundTrigger("test", function()
