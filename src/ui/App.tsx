@@ -11,6 +11,7 @@ import { ScriptLoader } from '../scripting/ScriptLoader.js';
 import { evaluateStatusFn } from './evaluateStatusFn.js';
 import { TriggerManager } from '../triggers/TriggerManager.js';
 import { OutboundTriggerManager } from '../triggers/OutboundTriggerManager.js';
+import { EchoTriggerManager } from '../triggers/EchoTriggerManager.js';
 import { AliasManager } from '../aliases/AliasManager.js';
 import { TimerManager } from '../timers/TimerManager.js';
 import { CommandHistoryManager } from '../history/CommandHistoryManager.js';
@@ -30,6 +31,7 @@ export function App({ profile, scripts = [], initialHistory = [] }: AppProps) {
   const statusFnRef = useRef<(() => any) | null>(null);
   const triggerManager = useMemo(() => new TriggerManager(), []);
   const outboundTriggerManager = useMemo(() => new OutboundTriggerManager(), []);
+  const echoTriggerManager = useMemo(() => new EchoTriggerManager(), []);
   const aliasManager = useMemo(() => new AliasManager(), []);
   const timerManager = useMemo(() => new TimerManager(), []);
   const historyManager = useMemo(() => CommandHistoryManager.getInstance(), []);
@@ -132,11 +134,12 @@ export function App({ profile, scripts = [], initialHistory = [] }: AppProps) {
           }
         },
         echo: (text: string) => {
-          // Display Lua output in the output area
+          echoTriggerManager.processEcho(text, handleLuaError);
           const segments = [{ text }];
           dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: text, segments });
         },
         cecho: (color: string, text: string) => {
+          echoTriggerManager.processEcho(text, handleLuaError);
           const segments = [{ text, color }];
           dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: text, segments });
         },
@@ -145,6 +148,9 @@ export function App({ profile, scripts = [], initialHistory = [] }: AppProps) {
         },
         createOutboundTrigger: (pattern: string, callback: any, options?: any) => {
           return outboundTriggerManager.createOutboundTrigger(pattern, callback, options);
+        },
+        createEchoTrigger: (pattern: string, callback: any, options?: any) => {
+          return echoTriggerManager.createEchoTrigger(pattern, callback, options);
         },
         createAlias: (pattern: string, callback: any, options?: any) => {
           return aliasManager.createAlias(pattern, callback, options);
@@ -191,6 +197,7 @@ export function App({ profile, scripts = [], initialHistory = [] }: AppProps) {
           // Clear all triggers, aliases, and timers
           triggerManager.clearTriggers();
           outboundTriggerManager.clearOutboundTriggers();
+          echoTriggerManager.clearEchoTriggers();
           aliasManager.clearAliases();
           timerManager.clearTimers();
 

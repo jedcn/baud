@@ -19,6 +19,7 @@ export interface LuaAPI {
   cecho: (color: string, text: string) => void;
   createTrigger: (pattern: string, callback: LuaCallback, options?: any) => string;
   createOutboundTrigger: (pattern: string, callback: LuaCallback, options?: any) => string;
+  createEchoTrigger: (pattern: string, callback: LuaCallback, options?: any) => string;
   createAlias: (pattern: string, callback: LuaCallback, options?: any) => string;
   createTimer: (interval: number, callback: LuaCallback, options?: any) => string;
   getTimers: () => TimerInfo[];
@@ -57,6 +58,7 @@ export class LuaEngine {
     });
     this.engine.global.set('createTrigger', this.api.createTrigger);
     this.engine.global.set('createOutboundTrigger', this.api.createOutboundTrigger);
+    this.engine.global.set('createEchoTrigger', this.api.createEchoTrigger);
     this.engine.global.set('createAlias', this.api.createAlias);
     this.engine.global.set('createTimer', this.api.createTimer);
     this.engine.global.set('getTimers', this.api.getTimers);
