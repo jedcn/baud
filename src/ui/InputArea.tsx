@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { useLineEditor } from './hooks/useLineEditor.js';
 import { useCommandHistory } from './hooks/useCommandHistory.js';
+import { useTabCompletion } from './hooks/useTabCompletion.js';
 import { useAppState } from '../state/StateContext.js';
 
 interface InputAreaProps {
@@ -13,6 +14,7 @@ interface InputAreaProps {
 export function InputArea({ onSubmit, initialHistory, onHistoryChange }: InputAreaProps) {
   const editor = useLineEditor();
   const history = useCommandHistory({ initialHistory, onHistoryChange });
+  const completion = useTabCompletion();
   const { dispatch } = useAppState();
 
   useInput((inputChar, key) => {
@@ -72,6 +74,9 @@ export function InputArea({ onSubmit, initialHistory, onHistoryChange }: InputAr
         return;
       }
 
+      // TAB during search - intentionally ignored
+      if (key.tab) return;
+
       // Regular character - add to search query
       if (!key.ctrl && !key.meta && inputChar) {
         history.updateSearchQuery(history.searchQuery + inputChar);
@@ -82,6 +87,30 @@ export function InputArea({ onSubmit, initialHistory, onHistoryChange }: InputAr
     }
 
     // Normal mode handling
+
+    // Cancel TAB completion on any non-TAB key
+    if (!key.tab && completion.isCompleting) {
+      completion.cancelCompletion();
+      // Do NOT return — let the key perform its normal action
+    }
+
+    // TAB - prefix-based autocomplete from history
+    if (key.tab) {
+      if (!completion.isCompleting) {
+        const first = completion.startCompletion(editor.text, history.history);
+        if (first !== undefined) {
+          editor.setText(first);
+          editor.setCursor(first.length);
+        }
+      } else {
+        const next = completion.nextCompletion();
+        if (next !== undefined) {
+          editor.setText(next);
+          editor.setCursor(next.length);
+        }
+      }
+      return;
+    }
 
     // CTRL-R - start reverse search
     if (key.ctrl && inputChar === 'r') {
@@ -197,11 +226,12 @@ export function InputArea({ onSubmit, initialHistory, onHistoryChange }: InputAr
     }
   });
 
-  // When navigating history, update the editor text
+  // When navigating history, update the editor text and cancel any active completion
   useEffect(() => {
     if (history.currentCommand !== undefined) {
       editor.setText(history.currentCommand);
       editor.setCursor(history.currentCommand.length);
+      completion.cancelCompletion();
     }
   }, [history.currentCommand]);
 
