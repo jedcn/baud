@@ -27,6 +27,11 @@ export interface TriggerInfo {
   enabled: boolean;
 }
 
+export interface SoundInfo {
+  name: string;
+  filepath: string;
+}
+
 export interface LuaAPI {
   send: (text: string) => void;
   echo: (text: string) => void;
@@ -44,6 +49,11 @@ export interface LuaAPI {
   disableTimer: (id: string) => void;
   setStatus: (segmentsOrFunction: any) => void;
   reloadScript: () => Promise<void>;
+  registerSound: (name: string, filepath: string) => void;
+  removeSound: (name: string) => boolean;
+  playSound: (name: string, options?: any) => void;
+  getSounds: () => SoundInfo[];
+  say: (text: string, options?: any) => void;
 }
 
 export class LuaEngine {
@@ -86,6 +96,11 @@ export class LuaEngine {
     this.engine.global.set('setStatus', this.api.setStatus);
     this.engine.global.set('cecho', this.api.cecho);
     this.engine.global.set('reloadScript', this.api.reloadScript);
+    this.engine.global.set('registerSound', this.api.registerSound);
+    this.engine.global.set('removeSound', this.api.removeSound);
+    this.engine.global.set('playSound', this.api.playSound);
+    this.engine.global.set('getSounds', this.api.getSounds);
+    this.engine.global.set('say', this.api.say);
   }
 
   /**

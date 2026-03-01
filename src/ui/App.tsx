@@ -13,6 +13,7 @@ import { TriggerManager } from '../triggers/TriggerManager.js';
 import { OutboundTriggerManager } from '../triggers/OutboundTriggerManager.js';
 import { AliasManager } from '../aliases/AliasManager.js';
 import { TimerManager } from '../timers/TimerManager.js';
+import { SoundManager } from '../sound/SoundManager.js';
 import { CommandHistoryManager } from '../history/CommandHistoryManager.js';
 import { SessionLogger } from '../logging/SessionLogger.js';
 import type { ConnectionProfile, StatusSegment } from '../state/AppState.js';
@@ -34,6 +35,7 @@ export function App({ profile, scripts = [], initialHistory = [], logFile }: App
   const outboundTriggerManager = useMemo(() => new OutboundTriggerManager(), []);
   const aliasManager = useMemo(() => new AliasManager(), []);
   const timerManager = useMemo(() => new TimerManager(), []);
+  const soundManager = useMemo(() => new SoundManager(), []);
   const historyManager = useMemo(() => CommandHistoryManager.getInstance(), []);
 
   const handleHistoryChange = useCallback((commands: string[]) => {
@@ -215,12 +217,28 @@ export function App({ profile, scripts = [], initialHistory = [], logFile }: App
             dispatch({ type: 'SET_STATUS_SEGMENTS', segments: [] });
           }
         },
+        registerSound: (name: string, filepath: string) => {
+          soundManager.registerSound(name, filepath);
+        },
+        removeSound: (name: string) => {
+          return soundManager.removeSound(name);
+        },
+        playSound: (name: string, options?: any) => {
+          soundManager.playSound(name, options);
+        },
+        getSounds: () => {
+          return soundManager.getSounds();
+        },
+        say: (text: string, options?: any) => {
+          soundManager.say(text, options);
+        },
         reloadScript: async () => {
-          // Clear all triggers, aliases, and timers
+          // Clear all triggers, aliases, timers, and sounds
           triggerManager.clearTriggers();
           outboundTriggerManager.clearOutboundTriggers();
           aliasManager.clearAliases();
           timerManager.clearTimers();
+          soundManager.clearSounds();
 
           // Reload all scripts
           if (scripts.length > 0) {
