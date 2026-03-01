@@ -7,7 +7,7 @@ import { ConfigManager } from './config/ConfigManager.js';
 import { CommandHistoryManager } from './history/CommandHistoryManager.js';
 import type { ConnectionProfile } from './state/AppState.js';
 
-async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: string[] }> {
+async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: string[]; logFile?: string }> {
   const args = process.argv.slice(2);
   const configManager = ConfigManager.getInstance();
 
@@ -15,6 +15,7 @@ async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: stri
   let port: number | undefined;
   let profileName: string | undefined;
   let saveProfile: string | undefined;
+  let logFile: string | undefined;
   const scripts: string[] = [];
 
   for (let i = 0; i < args.length; i++) {
@@ -29,6 +30,9 @@ async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: stri
       i++;
     } else if (args[i] === '--save-profile' && args[i + 1]) {
       saveProfile = args[i + 1];
+      i++;
+    } else if (args[i] === '--log' && args[i + 1]) {
+      logFile = args[i + 1];
       i++;
     } else if (args[i] === '--script' && args[i + 1]) {
       scripts.push(args[i + 1]);
@@ -47,6 +51,7 @@ Options:
   --port <port>            Server port number
   --save-profile <name>    Save this connection as a profile
   --script <path>          Load a Lua script file (can be specified multiple times)
+  --log <path>             Log all session bytes (sent/received) to a file
   --help, -h               Show this help message
 
 Examples:
@@ -67,7 +72,7 @@ Examples:
       console.error('Use --host and --port to connect directly, or check your profiles.');
       process.exit(1);
     }
-    return { profile, scripts };
+    return { profile, scripts, logFile };
   }
 
   // Otherwise, require --host and --port
@@ -93,14 +98,14 @@ Examples:
     console.log(`Profile '${saveProfile}' saved successfully.`);
   }
 
-  return { profile, scripts };
+  return { profile, scripts, logFile };
 }
 
-const { profile, scripts } = await parseArgs();
+const { profile, scripts, logFile } = await parseArgs();
 const initialHistory = await CommandHistoryManager.getInstance().load();
 
 render(
   <StateProvider>
-    <App profile={profile} scripts={scripts} initialHistory={initialHistory} />
+    <App profile={profile} scripts={scripts} initialHistory={initialHistory} logFile={logFile} />
   </StateProvider>
 );

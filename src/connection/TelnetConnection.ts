@@ -2,14 +2,17 @@ import { Telnet } from 'telnet-client';
 import { ConnectionManager } from './ConnectionManager.js';
 import { decodeCP437 } from '../utils/cp437.js';
 import type { ConnectionProfile } from '../state/AppState.js';
+import type { SessionLogger } from '../logging/SessionLogger.js';
 
 export class TelnetConnection extends ConnectionManager {
   private client: Telnet;
   private connected: boolean = false;
+  private logger?: SessionLogger;
 
-  constructor() {
+  constructor(logger?: SessionLogger) {
     super();
     this.client = new Telnet();
+    this.logger = logger;
   }
 
   async connect(profile: ConnectionProfile): Promise<void> {
@@ -18,6 +21,9 @@ export class TelnetConnection extends ConnectionManager {
 
     try {
       this.client.on('data', (buffer: Buffer) => {
+        if (this.logger) {
+          this.logger.logRecv(buffer);
+        }
         const text = decodeCP437(buffer);
         this.emitData(text);
       });
@@ -59,7 +65,11 @@ export class TelnetConnection extends ConnectionManager {
 
   send(data: string): void {
     if (this.connected) {
-      this.client.send(data + '\r\n');
+      const payload = data + '\r\n';
+      if (this.logger) {
+        this.logger.logSend(payload);
+      }
+      this.client.send(payload);
     }
   }
 
