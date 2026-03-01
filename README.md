@@ -180,6 +180,13 @@ Create a trigger that executes a Lua function when server output matches a patte
 - `matches[2]` = first capture group
 - `matches[3]` = second capture group, etc.
 
+The callback receives two arguments:
+- `matches` - A table of match results. For literal triggers, `matches[1]` is the full line. For regex triggers, `matches[1]` is the full match and `matches[2]`, `matches[3]`, etc. are capture groups.
+- `context` - A table with metadata about the matched line (optional, backwards compatible with existing triggers that don't use it).
+
+**Context fields:**
+- `context.isLastLine` - `true` if this line is the last non-empty line in the received data chunk, meaning the server is likely waiting for input. This is useful for BBS servers that bundle multiple screens into a single TCP packet — a trigger can avoid firing on stale prompts by checking this field.
+
 ```lua
 -- Simple trigger (literal text match)
 createTrigger("You have been poisoned!", function()
@@ -198,11 +205,22 @@ createTrigger("^You have (\\d+)/(\\d+) health", function(matches)
   end
 end, { type = "regex" })
 
+-- Using context.isLastLine to avoid stale prompts
+-- Some BBS servers bundle a prompt with the next screen in one packet.
+-- Without isLastLine, this trigger would fire even when the server
+-- has already moved past the prompt.
+createTrigger("^\\(N\\)onstop", function(matches, context)
+  if context.isLastLine then
+    send("n")
+  end
+end, { type = "regex" })
 ```
 
 **Options:**
 - `type` - `"literal"` (default) or `"regex"`
 - `enabled` - `true` (default) or `false`
+
+> **Note:** The `context` table currently contains only `isLastLine`. Future versions may add additional fields such as `lineIndex` (position of the line within the chunk), `lineCount` (total lines in the chunk), or `rawLine` (the original line with ANSI escape sequences). These would be added in a backwards-compatible way.
 
 #### createOutboundTrigger(pattern, callback, options)
 Create a trigger that executes a Lua function when a command is sent to the server. This fires on both programmatic `send()` calls and user-typed commands.

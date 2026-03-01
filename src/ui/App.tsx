@@ -66,16 +66,17 @@ export function App({ profile, scripts = [], initialHistory = [], logFile }: App
       connection.on('data', async (data: string) => {
         // Split by newlines and emit each line separately
         const lines = data.split(/\r?\n/);
-        for (const line of lines) {
-          if (line.trim().length > 0) {
-            const segments = ansiParser.parse(line);
-            const plainText = ansiParser.strip(line);
+        const nonEmptyLines = lines.filter((l) => l.trim().length > 0);
+        for (let i = 0; i < nonEmptyLines.length; i++) {
+          const line = nonEmptyLines[i];
+          const segments = ansiParser.parse(line);
+          const plainText = ansiParser.strip(line);
 
-            // Process triggers with error handling
-            await triggerManager.processLine(plainText, handleLuaError);
+          // Process triggers with error handling and context
+          const context = { isLastLine: i === nonEmptyLines.length - 1 };
+          await triggerManager.processLine(plainText, handleLuaError, context);
 
-            dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: plainText, segments });
-          }
+          dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: plainText, segments });
         }
 
         // Re-evaluate status bar after processing server data
