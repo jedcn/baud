@@ -30,6 +30,16 @@ describe('Triggers', () => {
       createAlias: () => '',
       createTimer: () => '',
       getTimers: () => [],
+      getAliases: () => [],
+      getTriggers: () => {
+        return triggerManager.getTriggers().map((t) => ({
+          id: t.id,
+          pattern: t.pattern,
+          type: t.type,
+          enabled: t.enabled,
+        }));
+      },
+      getOutboundTriggers: () => [],
       removeTimer: () => false,
       enableTimer: () => {},
       disableTimer: () => {},
@@ -269,6 +279,33 @@ describe('Triggers', () => {
 
     await triggerManager.processLine('hello');
     expect(echoedMessages).toContain('matched');
+  });
+
+  test('getTriggers returns trigger info from Lua', async () => {
+    await luaEngine.execute(`
+      createTrigger("You have been poisoned!", function()
+        send("drink antidote")
+      end)
+
+      createTrigger("^(\\\\w+) tells you", function(matches)
+        echo("Message from: " .. matches[2])
+      end, { type = "regex" })
+    `);
+
+    const result = await luaEngine.execute('return getTriggers()');
+    expect(result.success).toBe(true);
+
+    const triggers = result.result as any[];
+    expect(triggers).toHaveLength(2);
+
+    expect(triggers[0].pattern).toBe('You have been poisoned!');
+    expect(triggers[0].type).toBe('literal');
+    expect(triggers[0].enabled).toBe(true);
+    expect(triggers[0].id).toBeDefined();
+
+    expect(triggers[1].pattern).toBe('^(\\w+) tells you');
+    expect(triggers[1].type).toBe('regex');
+    expect(triggers[1].enabled).toBe(true);
   });
 
   test('trigger can use context.isLastLine to conditionally send', async () => {

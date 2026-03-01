@@ -30,6 +30,16 @@ describe('Aliases', () => {
       },
       createTimer: () => '',
       getTimers: () => [],
+      getAliases: () => {
+        return aliasManager.getAliases().map((a) => ({
+          id: a.id,
+          pattern: a.pattern,
+          type: a.type,
+          enabled: a.enabled,
+        }));
+      },
+      getTriggers: () => [],
+      getOutboundTriggers: () => [],
       removeTimer: () => false,
       enableTimer: () => {},
       disableTimer: () => {},
@@ -233,5 +243,43 @@ describe('Aliases', () => {
     expect(matched).toBe(true);
     expect(echoedMessages).toContain('Full: greet jed');
     expect(echoedMessages).toContain('Name: jed');
+  });
+
+  test('getAliases returns alias info from Lua', async () => {
+    await luaEngine.execute(`
+      createAlias("gg", function()
+        send("go north")
+      end)
+
+      createAlias("^heal (\\\\w+)$", function(matches)
+        send("cast heal " .. matches[2])
+      end, { type = "regex" })
+    `);
+
+    const result = await luaEngine.execute('return getAliases()');
+    expect(result.success).toBe(true);
+
+    const aliases = result.result as any[];
+    expect(aliases).toHaveLength(2);
+
+    expect(aliases[0].pattern).toBe('gg');
+    expect(aliases[0].type).toBe('literal');
+    expect(aliases[0].enabled).toBe(true);
+    expect(aliases[0].id).toBeDefined();
+
+    expect(aliases[1].pattern).toBe('^heal (\\w+)$');
+    expect(aliases[1].type).toBe('regex');
+    expect(aliases[1].enabled).toBe(true);
+  });
+
+  test('getAliases reflects disabled state', async () => {
+    await luaEngine.execute(`
+      createAlias("test", function() end, { enabled = false })
+    `);
+
+    const result = await luaEngine.execute('return getAliases()');
+    const aliases = result.result as any[];
+    expect(aliases).toHaveLength(1);
+    expect(aliases[0].enabled).toBe(false);
   });
 });

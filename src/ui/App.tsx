@@ -166,6 +166,30 @@ export function App({ profile, scripts = [], initialHistory = [], logFile }: App
             name: t.name,
           }));
         },
+        getAliases: () => {
+          return aliasManager.getAliases().map((a) => ({
+            id: a.id,
+            pattern: a.pattern,
+            type: a.type,
+            enabled: a.enabled,
+          }));
+        },
+        getTriggers: () => {
+          return triggerManager.getTriggers().map((t) => ({
+            id: t.id,
+            pattern: t.pattern,
+            type: t.type,
+            enabled: t.enabled,
+          }));
+        },
+        getOutboundTriggers: () => {
+          return outboundTriggerManager.getOutboundTriggers().map((t) => ({
+            id: t.id,
+            pattern: t.pattern,
+            type: t.type,
+            enabled: t.enabled,
+          }));
+        },
         removeTimer: (id: string) => {
           return timerManager.removeTimer(id);
         },
