@@ -344,6 +344,57 @@ Each timer object contains:
 - `running` - Whether timer is currently active
 - `name` - Optional name (if provided)
 
+#### getAliases()
+Get a list of all aliases with their current state.
+
+```lua
+local aliases = getAliases()
+for i, alias in ipairs(aliases) do
+  echo(string.format("Alias %s: pattern=%s, type=%s, enabled=%s",
+    alias.id, alias.pattern, alias.type, tostring(alias.enabled)))
+end
+```
+
+Each alias object contains:
+- `id` - Unique alias identifier
+- `pattern` - The pattern string (literal text or regex)
+- `type` - `"literal"` or `"regex"`
+- `enabled` - Whether the alias is active
+
+#### getTriggers()
+Get a list of all inbound triggers with their current state.
+
+```lua
+local triggers = getTriggers()
+for i, trigger in ipairs(triggers) do
+  echo(string.format("Trigger %s: pattern=%s, type=%s, enabled=%s",
+    trigger.id, trigger.pattern, trigger.type, tostring(trigger.enabled)))
+end
+```
+
+Each trigger object contains:
+- `id` - Unique trigger identifier
+- `pattern` - The pattern string (literal text or regex)
+- `type` - `"literal"` or `"regex"`
+- `enabled` - Whether the trigger is active
+
+#### getOutboundTriggers()
+Get a list of all outbound triggers with their current state.
+
+```lua
+local triggers = getOutboundTriggers()
+for i, trigger in ipairs(triggers) do
+  echo(string.format("Outbound trigger %s: pattern=%s, type=%s, enabled=%s",
+    trigger.id, trigger.pattern, trigger.type, tostring(trigger.enabled)))
+end
+```
+
+Each outbound trigger object contains:
+- `id` - Unique trigger identifier
+- `pattern` - The pattern string (literal text or regex)
+- `type` - `"literal"` or `"regex"`
+- `enabled` - Whether the trigger is active
+
 #### removeTimer(id)
 Stop and remove a timer by its ID.
 
