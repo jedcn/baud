@@ -14,15 +14,17 @@ import { OutboundTriggerManager } from '../triggers/OutboundTriggerManager.js';
 import { AliasManager } from '../aliases/AliasManager.js';
 import { TimerManager } from '../timers/TimerManager.js';
 import { CommandHistoryManager } from '../history/CommandHistoryManager.js';
+import { SessionLogger } from '../logging/SessionLogger.js';
 import type { ConnectionProfile, StatusSegment } from '../state/AppState.js';
 
 interface AppProps {
   profile?: ConnectionProfile;
   scripts?: string[];
   initialHistory?: string[];
+  logFile?: string;
 }
 
-export function App({ profile, scripts = [], initialHistory = [] }: AppProps) {
+export function App({ profile, scripts = [], initialHistory = [], logFile }: AppProps) {
   const { state, dispatch } = useAppState();
   const ansiParser = useMemo(() => new ANSIParser(), []);
   const [luaEngine, setLuaEngine] = useState<LuaEngine | null>(null);
@@ -58,7 +60,8 @@ export function App({ profile, scripts = [], initialHistory = [] }: AppProps) {
 
   useEffect(() => {
     if (profile && !state.connection.currentConnection) {
-      const connection = new TelnetConnection();
+      const logger = logFile ? new SessionLogger(logFile) : undefined;
+      const connection = new TelnetConnection(logger);
 
       connection.on('data', async (data: string) => {
         // Split by newlines and emit each line separately
