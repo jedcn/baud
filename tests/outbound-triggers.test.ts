@@ -36,6 +36,16 @@ describe('Outbound Triggers', () => {
       createAlias: () => '',
       createTimer: () => '',
       getTimers: () => [],
+      getAliases: () => [],
+      getTriggers: () => [],
+      getOutboundTriggers: () => {
+        return outboundTriggerManager.getOutboundTriggers().map((t) => ({
+          id: t.id,
+          pattern: t.pattern,
+          type: t.type,
+          enabled: t.enabled,
+        }));
+      },
       removeTimer: () => false,
       enableTimer: () => {},
       disableTimer: () => {},
@@ -214,5 +224,32 @@ describe('Outbound Triggers', () => {
     echoedMessages = [];
     await outboundTriggerManager.processCommand('rot 45');
     expect(echoedMessages).toContain('Rotating right');
+  });
+
+  test('getOutboundTriggers returns outbound trigger info from Lua', async () => {
+    await luaEngine.execute(`
+      createOutboundTrigger("rot", function()
+        echo("Rotation detected")
+      end)
+
+      createOutboundTrigger("^warp (\\\\d+)$", function(matches)
+        echo("Warping to " .. matches[2])
+      end, { type = "regex" })
+    `);
+
+    const result = await luaEngine.execute('return getOutboundTriggers()');
+    expect(result.success).toBe(true);
+
+    const triggers = result.result as any[];
+    expect(triggers).toHaveLength(2);
+
+    expect(triggers[0].pattern).toBe('rot');
+    expect(triggers[0].type).toBe('literal');
+    expect(triggers[0].enabled).toBe(true);
+    expect(triggers[0].id).toBeDefined();
+
+    expect(triggers[1].pattern).toBe('^warp (\\d+)$');
+    expect(triggers[1].type).toBe('regex');
+    expect(triggers[1].enabled).toBe(true);
   });
 });

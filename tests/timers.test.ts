@@ -25,6 +25,7 @@ describe('Timers', () => {
         echoedMessages.push(text);
       },
       createTrigger: () => '',
+      createOutboundTrigger: () => '',
       createAlias: () => '',
       createTimer: (interval: number, callback: any, options?: any) => {
         return timerManager.createTimer(interval, callback, options);
@@ -39,6 +40,9 @@ describe('Timers', () => {
           name: t.name,
         }));
       },
+      getAliases: () => [],
+      getTriggers: () => [],
+      getOutboundTriggers: () => [],
       removeTimer: (id: string) => {
         return timerManager.removeTimer(id);
       },
