@@ -239,4 +239,53 @@ describe('Triggers', () => {
     expect(echoedMessages).toContain('Full: Alice tells you');
     expect(echoedMessages).toContain('Player: Alice');
   });
+
+  test('trigger callback receives context with isLastLine', async () => {
+    await luaEngine.execute(`
+      createTrigger("prompt", function(matches, context)
+        if context.isLastLine then
+          echo("is last line")
+        else
+          echo("not last line")
+        end
+      end)
+    `);
+
+    await triggerManager.processLine('prompt', undefined, { isLastLine: true });
+    expect(echoedMessages).toContain('is last line');
+
+    echoedMessages = [];
+
+    await triggerManager.processLine('prompt', undefined, { isLastLine: false });
+    expect(echoedMessages).toContain('not last line');
+  });
+
+  test('trigger works without context (backwards compatible)', async () => {
+    await luaEngine.execute(`
+      createTrigger("hello", function(matches)
+        echo("matched")
+      end)
+    `);
+
+    await triggerManager.processLine('hello');
+    expect(echoedMessages).toContain('matched');
+  });
+
+  test('trigger can use context.isLastLine to conditionally send', async () => {
+    await luaEngine.execute(`
+      createTrigger("^\\\\(N\\\\)onstop", function(matches, context)
+        if context.isLastLine then
+          send("n")
+        end
+      end, { type = "regex" })
+    `);
+
+    // When nonstop is NOT the last line (server already moved on)
+    await triggerManager.processLine('(N)onstop, (Q)uit, or (C)ontinue?', undefined, { isLastLine: false });
+    expect(sentCommands).toHaveLength(0);
+
+    // When nonstop IS the last line (server is waiting)
+    await triggerManager.processLine('(N)onstop, (Q)uit, or (C)ontinue?', undefined, { isLastLine: true });
+    expect(sentCommands).toContain('n');
+  });
 });

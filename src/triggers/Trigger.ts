@@ -1,4 +1,8 @@
-export type TriggerCallback = (matches?: string[]) => void | Promise<void>;
+export interface TriggerContext {
+  isLastLine: boolean;
+}
+
+export type TriggerCallback = (matches?: string[], context?: TriggerContext) => void | Promise<void>;
 
 export interface TriggerOptions {
   type?: 'literal' | 'regex';
@@ -63,10 +67,11 @@ export class Trigger {
    */
   async execute(
     captures?: string[],
-    onError?: (error: Error) => void
+    onError?: (error: Error) => void,
+    context?: TriggerContext
   ): Promise<void> {
     try {
-      await this.callback(captures);
+      await this.callback(captures, context);
     } catch (error) {
       if (onError && error instanceof Error) {
         onError(error);

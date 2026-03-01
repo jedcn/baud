@@ -1,4 +1,4 @@
-import { Trigger, TriggerCallback, TriggerOptions } from './Trigger.js';
+import { Trigger, TriggerCallback, TriggerOptions, TriggerContext } from './Trigger.js';
 
 export class TriggerManager {
   private triggers: Trigger[] = [];
@@ -63,13 +63,14 @@ export class TriggerManager {
    */
   async processLine(
     text: string,
-    onError?: (error: Error) => void
+    onError?: (error: Error) => void,
+    context?: TriggerContext
   ): Promise<void> {
     for (const trigger of this.triggers) {
       const result = trigger.match(text);
       if (result.matched) {
         // Execute the trigger callback with error handling
-        await trigger.execute(result.captures || [], onError);
+        await trigger.execute(result.captures || [], onError, context);
       }
     }
   }
