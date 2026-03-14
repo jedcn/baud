@@ -7,7 +7,7 @@ import { ConfigManager } from './config/ConfigManager.js';
 import { CommandHistoryManager } from './history/CommandHistoryManager.js';
 import type { ConnectionProfile } from './state/AppState.js';
 
-async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: string[]; logFile?: string }> {
+async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: string[]; logBytesFile?: string; logTextFile?: string }> {
   const args = process.argv.slice(2);
   const configManager = ConfigManager.getInstance();
 
@@ -15,7 +15,8 @@ async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: stri
   let port: number | undefined;
   let profileName: string | undefined;
   let saveProfile: string | undefined;
-  let logFile: string | undefined;
+  let logBytesFile: string | undefined;
+  let logTextFile: string | undefined;
   const scripts: string[] = [];
 
   for (let i = 0; i < args.length; i++) {
@@ -31,8 +32,11 @@ async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: stri
     } else if (args[i] === '--save-profile' && args[i + 1]) {
       saveProfile = args[i + 1];
       i++;
-    } else if (args[i] === '--log' && args[i + 1]) {
-      logFile = args[i + 1];
+    } else if (args[i] === '--log-bytes' && args[i + 1]) {
+      logBytesFile = args[i + 1];
+      i++;
+    } else if (args[i] === '--log-text' && args[i + 1]) {
+      logTextFile = args[i + 1];
       i++;
     } else if (args[i] === '--script' && args[i + 1]) {
       scripts.push(args[i + 1]);
@@ -51,7 +55,8 @@ Options:
   --port <port>            Server port number
   --save-profile <name>    Save this connection as a profile
   --script <path>          Load a Lua script file (can be specified multiple times)
-  --log <path>             Log all session bytes (sent/received) to a file
+  --log-bytes <path>       Log all session bytes (sent/received) as a hex dump
+  --log-text <path>        Log session as plain text (received output and sent commands)
   --help, -h               Show this help message
 
 Examples:
@@ -59,6 +64,8 @@ Examples:
   baud --host localhost --port 4000
   baud --host bbs.example.com --port 23 --save-profile mybbs
   baud --profile myserver --script ./triggers.lua --script ./aliases.lua
+  baud --profile myserver --log-text ./session.txt
+  baud --profile myserver --log-bytes ./session.bin.log
       `);
       process.exit(0);
     }
@@ -72,7 +79,7 @@ Examples:
       console.error('Use --host and --port to connect directly, or check your profiles.');
       process.exit(1);
     }
-    return { profile, scripts, logFile };
+    return { profile, scripts, logBytesFile, logTextFile };
   }
 
   // Otherwise, require --host and --port
@@ -98,14 +105,14 @@ Examples:
     console.log(`Profile '${saveProfile}' saved successfully.`);
   }
 
-  return { profile, scripts, logFile };
+  return { profile, scripts, logBytesFile, logTextFile };
 }
 
-const { profile, scripts, logFile } = await parseArgs();
+const { profile, scripts, logBytesFile, logTextFile } = await parseArgs();
 const initialHistory = await CommandHistoryManager.getInstance().load();
 
 render(
   <StateProvider>
-    <App profile={profile} scripts={scripts} initialHistory={initialHistory} logFile={logFile} />
+    <App profile={profile} scripts={scripts} initialHistory={initialHistory} logBytesFile={logBytesFile} logTextFile={logTextFile} />
   </StateProvider>
 );

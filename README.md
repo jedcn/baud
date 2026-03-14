@@ -72,6 +72,40 @@ bun run src/main.tsx --host bbs.example.com --port 23 --save-profile mybbs
 bun run src/main.tsx --profile mybbs
 ```
 
+### Session Logging
+
+baud can log your session to a file in two formats.
+
+**Plain text** (`--log-text`) saves the session as a readable transcript — server output as-is and your sent commands prefixed with `> `. This is what you want for saving off what you see:
+
+```bash
+bun run src/main.tsx --profile myserver --log-text ./session.txt
+```
+
+The resulting file looks like:
+
+```
+# baud text log - started 2026-03-14T12:00:00.000Z
+
+Welcome to the realm, adventurer!
+You are standing in a dimly lit tavern.
+> look
+The tavern is busy with travelers.
+> go north
+```
+
+**Hex dump** (`--log-bytes`) logs the raw bytes over the wire in both directions with timestamps, useful for debugging protocol issues:
+
+```bash
+bun run src/main.tsx --profile myserver --log-bytes ./session.log
+```
+
+Both flags can be combined:
+
+```bash
+bun run src/main.tsx --profile myserver --log-text ./session.txt --log-bytes ./session.log
+```
+
 ### Help
 
 ```bash

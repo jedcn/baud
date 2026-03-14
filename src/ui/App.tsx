@@ -16,21 +16,24 @@ import { TimerManager } from '../timers/TimerManager.js';
 import { SoundManager } from '../sound/SoundManager.js';
 import { CommandHistoryManager } from '../history/CommandHistoryManager.js';
 import { SessionLogger } from '../logging/SessionLogger.js';
+import { TextLogger } from '../logging/TextLogger.js';
 import type { ConnectionProfile, StatusSegment } from '../state/AppState.js';
 
 interface AppProps {
   profile?: ConnectionProfile;
   scripts?: string[];
   initialHistory?: string[];
-  logFile?: string;
+  logBytesFile?: string;
+  logTextFile?: string;
 }
 
-export function App({ profile, scripts = [], initialHistory = [], logFile }: AppProps) {
+export function App({ profile, scripts = [], initialHistory = [], logBytesFile, logTextFile }: AppProps) {
   const { state, dispatch } = useAppState();
   const ansiParser = useMemo(() => new ANSIParser(), []);
   const [luaEngine, setLuaEngine] = useState<LuaEngine | null>(null);
   const connectionRef = useRef(state.connection.currentConnection);
   const statusFnRef = useRef<(() => any) | null>(null);
+  const textLoggerRef = useRef<TextLogger | undefined>(undefined);
   const triggerManager = useMemo(() => new TriggerManager(), []);
   const outboundTriggerManager = useMemo(() => new OutboundTriggerManager(), []);
   const aliasManager = useMemo(() => new AliasManager(), []);
@@ -62,8 +65,10 @@ export function App({ profile, scripts = [], initialHistory = [], logFile }: App
 
   useEffect(() => {
     if (profile && !state.connection.currentConnection) {
-      const logger = logFile ? new SessionLogger(logFile) : undefined;
-      const connection = new TelnetConnection(logger);
+      const bytesLogger = logBytesFile ? new SessionLogger(logBytesFile) : undefined;
+      const textLogger = logTextFile ? new TextLogger(logTextFile) : undefined;
+      textLoggerRef.current = textLogger;
+      const connection = new TelnetConnection(bytesLogger);
 
       connection.on('data', async (data: string) => {
         // Split by newlines and emit each line separately
@@ -73,6 +78,9 @@ export function App({ profile, scripts = [], initialHistory = [], logFile }: App
           const line = nonEmptyLines[i];
           const segments = ansiParser.parse(line);
           const plainText = ansiParser.strip(line);
+          if (textLogger) {
+            textLogger.logRecv(plainText);
+          }
 
           // Process triggers with error handling and context
           const context = { isLastLine: i === nonEmptyLines.length - 1 };
@@ -375,6 +383,9 @@ export function App({ profile, scripts = [], initialHistory = [], logFile }: App
     // Normal command - process outbound triggers and send to server
     if (state.connection.currentConnection) {
       await outboundTriggerManager.processCommand(text, handleLuaError);
+      if (textLoggerRef.current) {
+        textLoggerRef.current.logSend(text);
+      }
       state.connection.currentConnection.send(text);
     }
   };
