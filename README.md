@@ -6,6 +6,7 @@ A terminal-based MUD/BBS client with Lua scripting support, built with TypeScrip
 
 - **Telnet** - Connect to MUDs and BBSs via telnet
 - **Lua scripting** - Automate with Lua scripts (triggers, aliases, timers)
+- **Command chaining** - Send multiple commands in sequence with `&&`
 - **ANSI color support** - Full color terminal output
 - **Persistent command history** - Commands survive across sessions, with CTRL-R/CTRL-S reverse search
 - **Dynamic UI** - Create dynamic text from Lua
@@ -156,6 +157,16 @@ Each profile supports the following fields:
 - `username` (optional) - Username for SSH connections
 - `password` (optional) - Password for SSH connections
 - `privateKey` (optional) - Path to SSH private key file
+
+## Command Chaining
+
+Separate multiple commands with ` && ` to send them in sequence:
+
+```
+look && pick up diamond && south
+```
+
+Each part goes through the full pipeline — alias resolution, outbound triggers, then sent to the server — in order. The full line is stored as a single history entry.
 
 ## Lua Scripting
 
@@ -669,6 +680,7 @@ bun test --coverage
 
 ### Basic Input
 - **Type and press Enter** - Send command to server
+- **`cmd1 && cmd2`** - Send multiple commands in sequence
 - **Backspace** - Delete character before cursor
 - **CTRL-L** - Clear screen
 - **CTRL-C** - Exit

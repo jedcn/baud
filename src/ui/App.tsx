@@ -18,6 +18,7 @@ import { CommandHistoryManager } from '../history/CommandHistoryManager.js';
 import { SessionLogger } from '../logging/SessionLogger.js';
 import { TextLogger } from '../logging/TextLogger.js';
 import type { ConnectionProfile, StatusSegment } from '../state/AppState.js';
+import { splitCommandChain } from '../input/splitCommandChain.js';
 
 interface AppProps {
   profile?: ConnectionProfile;
@@ -330,6 +331,15 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
   }, [state.connection.status]);
 
   const handleSubmit = async (text: string) => {
+    // Handle command chaining: "look && get sword && south"
+    const parts = splitCommandChain(text);
+    if (parts.length > 1) {
+      for (const part of parts) {
+        await handleSubmit(part);
+      }
+      return;
+    }
+
     // Handle /lua commands
     if (text.startsWith('/lua ')) {
       const luaCode = text.slice(5); // Remove "/lua " prefix
