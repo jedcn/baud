@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import { useAppState } from '../state/StateContext.js';
-import type { TextSegment } from '../state/AppState.js';
+import type { OutputLine, TextSegment } from '../state/AppState.js';
 
 function renderSegment(segment: TextSegment, index: number) {
   return (
@@ -19,10 +18,11 @@ function renderSegment(segment: TextSegment, index: number) {
   );
 }
 
-export function OutputArea() {
-  const { state } = useAppState();
-  const { lines } = state.output;
+interface OutputAreaProps {
+  lines: OutputLine[];
+}
 
+export const OutputArea = React.memo(function OutputArea({ lines }: OutputAreaProps) {
   return (
     <Box flexDirection="column" flexGrow={1} paddingX={1}>
       {lines.length === 0 ? (
@@ -38,4 +38,4 @@ export function OutputArea() {
       )}
     </Box>
   );
-}
+});

@@ -408,7 +408,7 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
 
   return (
     <Box flexDirection="column" height="100%">
-      <OutputArea />
+      <OutputArea lines={state.output.lines} />
       <Box flexDirection="column" borderStyle="round" borderColor="cyan" flexShrink={0}>
         <InputArea onSubmit={handleSubmit} initialHistory={initialHistory} onHistoryChange={handleHistoryChange} />
         <Box borderStyle="single" borderColor="gray" borderBottom={false} borderLeft={false} borderRight={false} />
