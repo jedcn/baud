@@ -407,13 +407,13 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
   };
 
   return (
-    <Box flexDirection="column" height="100%">
-      <OutputArea lines={state.output.lines} />
-      <Box flexDirection="column" borderStyle="round" borderColor="cyan" flexShrink={0}>
+    <>
+      <OutputArea lines={state.output.lines} generation={state.output.generation} />
+      <Box flexDirection="column" borderStyle="round" borderColor="cyan">
         <InputArea onSubmit={handleSubmit} initialHistory={initialHistory} onHistoryChange={handleHistoryChange} />
         <Box borderStyle="single" borderColor="gray" borderBottom={false} borderLeft={false} borderRight={false} />
         <StatusArea />
       </Box>
-    </Box>
+    </>
   );
 }

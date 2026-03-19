@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Text } from 'ink';
+import { Box, Static, Text } from 'ink';
 import type { OutputLine, TextSegment } from '../state/AppState.js';
 
 function renderSegment(segment: TextSegment, index: number) {
@@ -20,22 +20,19 @@ function renderSegment(segment: TextSegment, index: number) {
 
 interface OutputAreaProps {
   lines: OutputLine[];
+  generation: number;
 }
 
-export const OutputArea = React.memo(function OutputArea({ lines }: OutputAreaProps) {
+export function OutputArea({ lines, generation }: OutputAreaProps) {
   return (
-    <Box flexDirection="column" flexGrow={1} paddingX={1}>
-      {lines.length === 0 ? (
-        <Text dimColor>No output yet...</Text>
-      ) : (
-        lines.map((line, lineIndex) => (
-          <Box key={lineIndex}>
-            {line.segments.map((segment, segmentIndex) =>
-              renderSegment(segment, segmentIndex)
-            )}
-          </Box>
-        ))
+    <Static key={generation} items={lines}>
+      {(line) => (
+        <Box key={line.id} paddingX={1}>
+          {line.segments.map((segment, segmentIndex) =>
+            renderSegment(segment, segmentIndex)
+          )}
+        </Box>
       )}
-    </Box>
+    </Static>
   );
-});
+}
