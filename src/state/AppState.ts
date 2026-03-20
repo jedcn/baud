@@ -56,7 +56,6 @@ export type AppAction =
   | { type: 'CONNECTION_ESTABLISHED'; connection: ConnectionManager; profile: ConnectionProfile }
   | { type: 'CONNECTION_CLOSED' }
   | { type: 'OUTPUT_LINE_RECEIVED'; line: string; segments: TextSegment[] }
-  | { type: 'OUTPUT_LINES_RECEIVED'; lines: Array<{ line: string; segments: TextSegment[] }> }
   | { type: 'CLEAR_OUTPUT' }
   | { type: 'SET_STATUS_SEGMENTS'; segments: StatusSegment[] };
 
@@ -115,24 +114,6 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           ...state.output,
           lines: [...state.output.lines, newLine],
           nextLineId: state.output.nextLineId + 1,
-        },
-      };
-    }
-
-    case 'OUTPUT_LINES_RECEIVED': {
-      let nextId = state.output.nextLineId;
-      const newLines = action.lines.map(({ line, segments }) => ({
-        id: nextId++,
-        text: line,
-        segments,
-        timestamp: new Date(),
-      }));
-      return {
-        ...state,
-        output: {
-          ...state.output,
-          lines: [...state.output.lines, ...newLines],
-          nextLineId: nextId,
         },
       };
     }
