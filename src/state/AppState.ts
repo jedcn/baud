@@ -53,6 +53,7 @@ export type AppAction =
   | { type: 'CONNECTION_ESTABLISHED'; connection: ConnectionManager; profile: ConnectionProfile }
   | { type: 'CONNECTION_CLOSED' }
   | { type: 'OUTPUT_LINE_RECEIVED'; line: string; segments: TextSegment[] }
+  | { type: 'OUTPUT_LINES_RECEIVED'; lines: Array<{ line: string; segments: TextSegment[] }> }
   | { type: 'CLEAR_OUTPUT' }
   | { type: 'SET_STATUS_SEGMENTS'; segments: StatusSegment[] };
 
@@ -117,6 +118,24 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         output: {
           ...state.output,
           lines: newLines,
+        },
+      };
+    }
+
+    case 'OUTPUT_LINES_RECEIVED': {
+      const newLines = [...state.output.lines];
+      for (const { line, segments } of action.lines) {
+        newLines.push({ text: line, segments, timestamp: new Date() });
+      }
+      const trimmed =
+        newLines.length > state.output.maxLines
+          ? newLines.slice(newLines.length - state.output.maxLines)
+          : newLines;
+      return {
+        ...state,
+        output: {
+          ...state.output,
+          lines: trimmed,
         },
       };
     }

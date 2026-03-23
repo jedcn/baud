@@ -73,9 +73,10 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
       const connection = new TelnetConnection(bytesLogger);
 
       connection.on('data', async (data: string) => {
-        // Split by newlines and emit each line separately
+        // Split by newlines and process each line
         const lines = data.split(/\r?\n/);
         const nonEmptyLines = lines.filter((l) => l.trim().length > 0);
+        const parsed: Array<{ line: string; segments: import('../state/AppState.js').TextSegment[] }> = [];
         for (let i = 0; i < nonEmptyLines.length; i++) {
           const line = nonEmptyLines[i];
           const segments = ansiParser.parse(line);
@@ -88,7 +89,12 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
           const context = { isLastLine: i === nonEmptyLines.length - 1 };
           await triggerManager.processLine(plainText, handleLuaError, context);
 
-          dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: plainText, segments });
+          parsed.push({ line: plainText, segments });
+        }
+
+        // Dispatch all lines in a single action to avoid per-line re-renders
+        if (parsed.length > 0) {
+          dispatch({ type: 'OUTPUT_LINES_RECEIVED', lines: parsed });
         }
 
         // Re-evaluate status bar after processing server data
