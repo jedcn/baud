@@ -117,5 +117,6 @@ const initialHistory = await CommandHistoryManager.getInstance().load();
 render(
   <StateProvider>
     <App profile={profile} scripts={scripts} initialHistory={initialHistory} logBytesFile={logBytesFile} logTextFile={logTextFile} renderStats={renderStats} />
-  </StateProvider>
+  </StateProvider>,
+  { incrementalRendering: true }
 );

@@ -18,15 +18,15 @@
     "format": "bunx @biomejs/biome format --write src/"
   },
   "dependencies": {
-    "ink": "^5.0.1",
-    "react": "^18.3.1",
+    "ink": "^6.8.0",
+    "react": "^19.0.0",
     "telnet-client": "^2.2.2",
     "wasmoon": "^1.16.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@types/react": "^18.3.12",
+    "@types/react": "^19.0.0",
     "bun-types": "latest",
     "ink-testing-library": "^4.0.0",
     "react-devtools-core": "^7.0.1"
