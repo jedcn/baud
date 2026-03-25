@@ -27,25 +27,12 @@ export function OutputArea({ renderStats }: OutputAreaProps) {
   const { state } = useAppState();
   const { lines } = state.output;
   const renderCount = useRef(0);
-  const firstRenderAt = useRef<number | null>(null);
-  const lastRenderAt = useRef<number | null>(null);
-
-  const now = performance.now();
   renderCount.current += 1;
-  if (firstRenderAt.current === null) firstRenderAt.current = now;
-  lastRenderAt.current = now;
-
-  const spanMs = firstRenderAt.current !== null && renderCount.current > 1
-    ? Math.round(lastRenderAt.current! - firstRenderAt.current)
-    : 0;
-  const avgMs = renderCount.current > 1
-    ? Math.round(spanMs / (renderCount.current - 1))
-    : 0;
 
   return (
     <Box flexDirection="column" flexGrow={1} paddingX={1}>
       {renderStats && (
-        <Text dimColor>renders: {renderCount.current} | span: {spanMs}ms | avg: {avgMs}ms/render | lines in state: {lines.length}</Text>
+        <Text dimColor>renders: {renderCount.current} | lines in state: {lines.length}</Text>
       )}
       {lines.length === 0 ? (
         <Text dimColor>No output yet...</Text>
