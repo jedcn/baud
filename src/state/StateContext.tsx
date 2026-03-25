@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, type ReactNode, type Dispatch } from 'react';
-import { appReducer, initialState, type AppState, type AppAction } from './AppState.js';
+import { appReducer, makeInitialState, type AppState, type AppAction } from './AppState.js';
 
 interface StateContextValue {
   state: AppState;
@@ -10,10 +10,11 @@ const StateContext = createContext<StateContextValue | undefined>(undefined);
 
 interface StateProviderProps {
   children: ReactNode;
+  maxLines?: number;
 }
 
-export function StateProvider({ children }: StateProviderProps) {
-  const [state, dispatch] = useReducer(appReducer, initialState);
+export function StateProvider({ children, maxLines }: StateProviderProps) {
+  const [state, dispatch] = useReducer(appReducer, makeInitialState(maxLines));
 
   return (
     <StateContext.Provider value={{ state, dispatch }}>

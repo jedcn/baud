@@ -56,16 +56,18 @@ export type AppAction =
   | { type: 'CLEAR_OUTPUT' }
   | { type: 'SET_STATUS_SEGMENTS'; segments: StatusSegment[] };
 
-export const initialState: AppState = {
-  connection: {
-    status: 'disconnected',
-  },
-  output: {
-    lines: [],
-    maxLines: process.stdout.rows ?? 50,
-  },
-  statusSegments: [],
-};
+export function makeInitialState(maxLines?: number): AppState {
+  return {
+    connection: {
+      status: 'disconnected',
+    },
+    output: {
+      lines: [],
+      maxLines: maxLines ?? process.stdout.rows ?? 50,
+    },
+    statusSegments: [],
+  };
+}
 
 export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
