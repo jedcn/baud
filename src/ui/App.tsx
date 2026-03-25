@@ -26,9 +26,10 @@ interface AppProps {
   initialHistory?: string[];
   logBytesFile?: string;
   logTextFile?: string;
+  renderStats?: boolean;
 }
 
-export function App({ profile, scripts = [], initialHistory = [], logBytesFile, logTextFile }: AppProps) {
+export function App({ profile, scripts = [], initialHistory = [], logBytesFile, logTextFile, renderStats }: AppProps) {
   const { state, dispatch } = useAppState();
   const ansiParser = useMemo(() => new ANSIParser(), []);
   const [luaEngine, setLuaEngine] = useState<LuaEngine | null>(null);
@@ -402,7 +403,7 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
 
   return (
     <Box flexDirection="column" height="100%">
-      <OutputArea />
+      <OutputArea renderStats={renderStats} />
       <Box flexDirection="column" borderStyle="round" borderColor="cyan" flexShrink={0}>
         <InputArea onSubmit={handleSubmit} initialHistory={initialHistory} onHistoryChange={handleHistoryChange} />
         <Box borderStyle="single" borderColor="gray" borderBottom={false} borderLeft={false} borderRight={false} />

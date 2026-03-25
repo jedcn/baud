@@ -7,7 +7,7 @@ import { ConfigManager } from './config/ConfigManager.js';
 import { CommandHistoryManager } from './history/CommandHistoryManager.js';
 import type { ConnectionProfile } from './state/AppState.js';
 
-async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: string[]; logBytesFile?: string; logTextFile?: string }> {
+async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: string[]; logBytesFile?: string; logTextFile?: string; renderStats?: boolean }> {
   const args = process.argv.slice(2);
   const configManager = ConfigManager.getInstance();
 
@@ -17,6 +17,7 @@ async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: stri
   let saveProfile: string | undefined;
   let logBytesFile: string | undefined;
   let logTextFile: string | undefined;
+  let renderStats: boolean = false;
   const scripts: string[] = [];
 
   for (let i = 0; i < args.length; i++) {
@@ -41,6 +42,8 @@ async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: stri
     } else if (args[i] === '--script' && args[i + 1]) {
       scripts.push(args[i + 1]);
       i++;
+    } else if (args[i] === '--render-stats') {
+      renderStats = true;
     } else if (args[i] === '--help' || args[i] === '-h') {
       console.log(`
 baud - Terminal MUD/BBS Client
@@ -79,7 +82,7 @@ Examples:
       console.error('Use --host and --port to connect directly, or check your profiles.');
       process.exit(1);
     }
-    return { profile, scripts, logBytesFile, logTextFile };
+    return { profile, scripts, logBytesFile, logTextFile, renderStats };
   }
 
   // Otherwise, require --host and --port
@@ -105,14 +108,14 @@ Examples:
     console.log(`Profile '${saveProfile}' saved successfully.`);
   }
 
-  return { profile, scripts, logBytesFile, logTextFile };
+  return { profile, scripts, logBytesFile, logTextFile, renderStats };
 }
 
-const { profile, scripts, logBytesFile, logTextFile } = await parseArgs();
+const { profile, scripts, logBytesFile, logTextFile, renderStats } = await parseArgs();
 const initialHistory = await CommandHistoryManager.getInstance().load();
 
 render(
   <StateProvider>
-    <App profile={profile} scripts={scripts} initialHistory={initialHistory} logBytesFile={logBytesFile} logTextFile={logTextFile} />
+    <App profile={profile} scripts={scripts} initialHistory={initialHistory} logBytesFile={logBytesFile} logTextFile={logTextFile} renderStats={renderStats} />
   </StateProvider>
 );

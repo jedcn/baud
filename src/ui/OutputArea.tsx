@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Box, Text } from 'ink';
 import { useAppState } from '../state/StateContext.js';
 import type { TextSegment } from '../state/AppState.js';
@@ -19,12 +19,21 @@ function renderSegment(segment: TextSegment, index: number) {
   );
 }
 
-export function OutputArea() {
+interface OutputAreaProps {
+  renderStats?: boolean;
+}
+
+export function OutputArea({ renderStats }: OutputAreaProps) {
   const { state } = useAppState();
   const { lines } = state.output;
+  const renderCount = useRef(0);
+  renderCount.current += 1;
 
   return (
     <Box flexDirection="column" flexGrow={1} paddingX={1}>
+      {renderStats && (
+        <Text dimColor>renders: {renderCount.current}</Text>
+      )}
       {lines.length === 0 ? (
         <Text dimColor>No output yet...</Text>
       ) : (
