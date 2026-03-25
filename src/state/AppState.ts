@@ -62,7 +62,7 @@ export const initialState: AppState = {
   },
   output: {
     lines: [],
-    maxLines: 1000,
+    maxLines: process.stdout.rows ?? 50,
   },
   statusSegments: [],
 };
