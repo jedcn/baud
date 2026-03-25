@@ -107,6 +107,16 @@ Both flags can be combined:
 bun run src/main.tsx --profile myserver --log-text ./session.txt --log-bytes ./session.log
 ```
 
+### Render Stats
+
+Pass `--render-stats` to display a live overlay showing how many times the output area has re-rendered and how many lines are currently held in state:
+
+```bash
+bun run src/main.tsx --profile myserver --render-stats
+```
+
+This is useful for measuring the effect of rendering optimizations. The overlay appears as a dim line at the top of the output area and does not affect normal operation.
+
 ### Help
 
 ```bash
