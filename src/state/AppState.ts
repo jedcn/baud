@@ -56,14 +56,14 @@ export type AppAction =
   | { type: 'CLEAR_OUTPUT' }
   | { type: 'SET_STATUS_SEGMENTS'; segments: StatusSegment[] };
 
-export function makeInitialState(maxLines?: number): AppState {
+export function makeInitialState(): AppState {
   return {
     connection: {
       status: 'disconnected',
     },
     output: {
       lines: [],
-      maxLines: maxLines ?? process.stdout.rows ?? 50,
+      maxLines: process.stdout.rows ?? 50,
     },
     statusSegments: [],
   };

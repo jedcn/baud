@@ -10,11 +10,10 @@ const StateContext = createContext<StateContextValue | undefined>(undefined);
 
 interface StateProviderProps {
   children: ReactNode;
-  maxLines?: number;
 }
 
-export function StateProvider({ children, maxLines }: StateProviderProps) {
-  const [state, dispatch] = useReducer(appReducer, makeInitialState(maxLines));
+export function StateProvider({ children }: StateProviderProps) {
+  const [state, dispatch] = useReducer(appReducer, makeInitialState());
 
   return (
     <StateContext.Provider value={{ state, dispatch }}>
