@@ -64,7 +64,7 @@ export function makeInitialState(): AppState {
     },
     output: {
       lines: [],
-      maxLines: process.stdout.rows ?? 50,
+      maxLines: (process.stdout.rows ?? 50) * 3,
     },
     statusSegments: [],
   };
