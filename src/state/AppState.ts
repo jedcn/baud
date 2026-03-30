@@ -13,6 +13,7 @@ export interface TextSegment {
 }
 
 export interface OutputLine {
+  id: number; // Monotonic ID, used as stable key for <Static>
   text: string; // Plain text (ANSI codes stripped)
   segments: TextSegment[]; // Styled text segments
   timestamp: Date;
@@ -43,7 +44,8 @@ export interface AppState {
   };
   output: {
     lines: OutputLine[];
-    maxLines: number;
+    nextLineId: number;
+    generation: number; // increments on CLEAR_OUTPUT so <Static> remounts with fresh state
   };
   statusSegments: StatusSegment[];
 }
@@ -62,7 +64,8 @@ export const initialState: AppState = {
   },
   output: {
     lines: [],
-    maxLines: 1000,
+    nextLineId: 0,
+    generation: 0,
   },
   statusSegments: [],
 };
@@ -99,22 +102,17 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'OUTPUT_LINE_RECEIVED': {
       const newLine: OutputLine = {
+        id: state.output.nextLineId,
         text: action.line,
         segments: action.segments,
         timestamp: new Date(),
       };
-
-      // Ring buffer: keep only maxLines
-      const newLines = [...state.output.lines, newLine];
-      if (newLines.length > state.output.maxLines) {
-        newLines.shift();
-      }
-
       return {
         ...state,
         output: {
           ...state.output,
-          lines: newLines,
+          lines: [...state.output.lines, newLine],
+          nextLineId: state.output.nextLineId + 1,
         },
       };
     }
@@ -123,8 +121,9 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         output: {
-          ...state.output,
           lines: [],
+          nextLineId: 0,
+          generation: state.output.generation + 1,
         },
       };
 
