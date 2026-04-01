@@ -208,8 +208,6 @@ export function InputArea({ onSubmit, initialHistory, onHistoryChange }: InputAr
 
     // CTRL-L - clear screen
     if (key.ctrl && inputChar === 'l') {
-      // Clear the physical terminal screen (ANSI escape: clear screen + move cursor home)
-      process.stdout.write('\x1B[2J\x1B[H');
       dispatch({ type: 'CLEAR_OUTPUT' });
       return;
     }

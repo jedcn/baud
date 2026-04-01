@@ -400,14 +400,22 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
     }
   };
 
+  // Write the physical screen clear after React has re-rendered with the new generation,
+  // so <Static> has already remounted before Ink's cursor tracking is affected.
+  useEffect(() => {
+    if (state.output.generation > 0) {
+      process.stdout.write('\x1B[2J\x1B[H');
+    }
+  }, [state.output.generation]);
+
   return (
-    <Box flexDirection="column" height="100%">
-      <OutputArea />
-      <Box flexDirection="column" borderStyle="round" borderColor="cyan" flexShrink={0}>
+    <>
+      <OutputArea lines={state.output.lines} generation={state.output.generation} />
+      <Box flexDirection="column" borderStyle="round" borderColor="cyan">
         <InputArea onSubmit={handleSubmit} initialHistory={initialHistory} onHistoryChange={handleHistoryChange} />
         <Box borderStyle="single" borderColor="gray" borderBottom={false} borderLeft={false} borderRight={false} />
         <StatusArea />
       </Box>
-    </Box>
+    </>
   );
 }
