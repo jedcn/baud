@@ -69,7 +69,12 @@ export class TelnetConnection extends ConnectionManager {
       if (this.logger) {
         this.logger.logSend(payload);
       }
-      this.client.send(payload);
+      this.client.send(payload).catch((error: unknown) => {
+        this.connected = false;
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        this.emitStatus('error', errorMessage);
+        this.emitError(error instanceof Error ? error : new Error(errorMessage));
+      });
     }
   }
 
