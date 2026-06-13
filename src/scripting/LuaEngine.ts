@@ -1,4 +1,5 @@
 import { LuaFactory, LuaEngine as WasmoonEngine } from 'wasmoon';
+import { Database } from 'bun:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -101,6 +102,17 @@ export class LuaEngine {
     this.engine.global.set('playSound', this.api.playSound);
     this.engine.global.set('getSounds', this.api.getSounds);
     this.engine.global.set('say', this.api.say);
+    this.engine.global.set('dbOpen', (name: string) => {
+      const dbPath = path.join(process.cwd(), name);
+      const db = new Database(dbPath);
+      db.exec('PRAGMA journal_mode = WAL');
+      return {
+        execute:  (sql: string, ...params: unknown[]) => db.prepare(sql).run(...params).changes,
+        query:    (sql: string, ...params: unknown[]) => db.prepare(sql).all(...params),
+        queryOne: (sql: string, ...params: unknown[]) => db.prepare(sql).get(...params) ?? null,
+        path: dbPath,
+      };
+    });
   }
 
   /**

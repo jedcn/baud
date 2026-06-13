@@ -147,7 +147,7 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
           }
         },
         echo: (text: string) => {
-          // Display Lua output in the output area
+          textLoggerRef.current?.logRecv(text);
           const segments = [{ text }];
           dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: text, segments });
         },
