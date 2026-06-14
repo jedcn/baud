@@ -57,6 +57,7 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
   // Error handler for Lua script errors
   const handleLuaError = (error: Error) => {
     const errorMessage = `Lua error: ${error.message}`;
+    textLoggerRef.current?.logRecv(errorMessage);
     dispatch({
       type: 'OUTPUT_LINE_RECEIVED',
       line: errorMessage,
