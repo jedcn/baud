@@ -71,7 +71,7 @@ export class LuaEngine {
    * Initialize the Lua engine and register API functions
    */
   async initialize(): Promise<void> {
-    this.engine = await this.factory.createEngine();
+    this.engine = await this.factory.createEngine({ injectObjects: true });
 
     // Register global functions (without namespace)
     this.engine.global.set('send', this.api.send);
