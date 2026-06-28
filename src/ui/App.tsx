@@ -156,6 +156,10 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
           const segments = [{ text, color }];
           dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: text, segments });
         },
+        cechoBg: (color: string, backgroundColor: string, text: string) => {
+          const segments = [{ text, color, backgroundColor }];
+          dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: text, segments });
+        },
         createTrigger: (pattern: string, callback: any, options?: any) => {
           return triggerManager.createTrigger(pattern, callback, options);
         },
