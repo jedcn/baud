@@ -47,6 +47,9 @@ describe('Triggers', () => {
       cecho: (color: string, text: string) => {
         echoedMessages.push(`[${color}]${text}`);
       },
+      cechoBg: (color: string, backgroundColor: string, text: string, bold?: boolean) => {
+        echoedMessages.push(`[${color} on ${backgroundColor}${bold ? ' bold' : ''}]${text}`);
+      },
     });
 
     await luaEngine.initialize();
@@ -232,6 +235,22 @@ describe('Triggers', () => {
     await triggerManager.processLine('You take 10 damage');
 
     expect(echoedMessages).toContain('[red]You took damage!');
+  });
+
+  test('cechoBg outputs text with foreground and background colors', async () => {
+    await luaEngine.execute(`
+      cechoBg("#ff5fd7", "#e0e0e0", " HIT 12 ")
+    `);
+
+    expect(echoedMessages).toContain('[#ff5fd7 on #e0e0e0] HIT 12 ');
+  });
+
+  test('cechoBg passes the bold flag through', async () => {
+    await luaEngine.execute(`
+      cechoBg("#ff5fd7", "#e0e0e0", " HIT 12 ", true)
+    `);
+
+    expect(echoedMessages).toContain('[#ff5fd7 on #e0e0e0 bold] HIT 12 ');
   });
 
   test('matches[1] contains full matched string in trigger', async () => {
