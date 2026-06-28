@@ -37,7 +37,7 @@ export interface LuaAPI {
   send: (text: string) => void;
   echo: (text: string) => void;
   cecho: (color: string, text: string) => void;
-  cechoBg: (color: string, backgroundColor: string, text: string) => void;
+  cechoBg: (color: string, backgroundColor: string, text: string, bold?: boolean) => void;
   createTrigger: (pattern: string, callback: LuaCallback, options?: any) => string;
   createOutboundTrigger: (pattern: string, callback: LuaCallback, options?: any) => string;
   createAlias: (pattern: string, callback: LuaCallback, options?: any) => string;
