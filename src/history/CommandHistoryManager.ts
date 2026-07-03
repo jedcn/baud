@@ -1,6 +1,6 @@
-import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { getConfigPath, getConfigDir } from '../utils/paths.js';
+import fs from 'node:fs/promises';
+import { getConfigDir, getConfigPath } from '../utils/paths.js';
 
 const HISTORY_FILE = 'history.json';
 const MAX_HISTORY_SIZE = 1000;
@@ -44,9 +44,10 @@ export class CommandHistoryManager {
 
     const filePath = getConfigPath(HISTORY_FILE);
     // Keep only the most recent commands if over the limit
-    const trimmed = commands.length > MAX_HISTORY_SIZE
-      ? commands.slice(commands.length - MAX_HISTORY_SIZE)
-      : commands;
+    const trimmed =
+      commands.length > MAX_HISTORY_SIZE
+        ? commands.slice(commands.length - MAX_HISTORY_SIZE)
+        : commands;
 
     await fs.writeFile(filePath, JSON.stringify({ commands: trimmed }, null, 2), 'utf-8');
   }

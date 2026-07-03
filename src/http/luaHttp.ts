@@ -14,10 +14,7 @@ export interface LuaHttpApi {
  * network errors into a result table, and any error raised by the Lua callback
  * itself is routed to onError.
  */
-export function createLuaHttpApi(
-  client: HttpClient,
-  onError: (error: Error) => void,
-): LuaHttpApi {
+export function createLuaHttpApi(client: HttpClient, onError: (error: Error) => void): LuaHttpApi {
   const run = async (url: string, options: any, cb: any): Promise<void> => {
     try {
       const result = await client.request(url, options);

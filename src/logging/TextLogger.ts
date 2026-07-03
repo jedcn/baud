@@ -1,4 +1,4 @@
-import { writeFileSync, appendFileSync } from 'fs';
+import { appendFileSync, writeFileSync } from 'node:fs';
 
 export class TextLogger {
   private filePath: string;
@@ -9,10 +9,10 @@ export class TextLogger {
   }
 
   logRecv(text: string): void {
-    appendFileSync(this.filePath, text + '\n');
+    appendFileSync(this.filePath, `${text}\n`);
   }
 
   logSend(text: string): void {
-    appendFileSync(this.filePath, '> ' + text + '\n');
+    appendFileSync(this.filePath, `> ${text}\n`);
   }
 }

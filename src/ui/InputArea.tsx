@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
-import { useLineEditor } from './hooks/useLineEditor.js';
-import { useCommandHistory } from './hooks/useCommandHistory.js';
-import { useTabCompletion } from './hooks/useTabCompletion.js';
+import React, { useEffect } from 'react';
 import { useAppState } from '../state/StateContext.js';
+import { useCommandHistory } from './hooks/useCommandHistory.js';
+import { useLineEditor } from './hooks/useLineEditor.js';
+import { useTabCompletion } from './hooks/useTabCompletion.js';
 
 interface InputAreaProps {
   onSubmit: (text: string) => void | Promise<void>;
@@ -225,6 +225,7 @@ export function InputArea({ onSubmit, initialHistory, onHistoryChange }: InputAr
   });
 
   // When navigating history, update the editor text and cancel any active completion
+  // biome-ignore lint/correctness/useExhaustiveDependencies: this effect intentionally reacts only to history navigation, not to editor/completion identity
   useEffect(() => {
     if (history.currentCommand !== undefined) {
       editor.setText(history.currentCommand);

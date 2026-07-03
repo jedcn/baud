@@ -1,4 +1,9 @@
-import { Trigger, TriggerCallback, TriggerOptions, TriggerContext } from './Trigger.js';
+import {
+  Trigger,
+  type TriggerCallback,
+  type TriggerContext,
+  type TriggerOptions,
+} from './Trigger.js';
 
 export class TriggerManager {
   private triggers: Trigger[] = [];
@@ -10,11 +15,7 @@ export class TriggerManager {
    * @param options - Optional configuration
    * @returns The created trigger's ID
    */
-  createTrigger(
-    pattern: string,
-    callback: TriggerCallback,
-    options?: TriggerOptions
-  ): string {
+  createTrigger(pattern: string, callback: TriggerCallback, options?: TriggerOptions): string {
     const trigger = new Trigger(pattern, callback, options);
     this.triggers.push(trigger);
     return trigger.id;
@@ -64,7 +65,7 @@ export class TriggerManager {
   async processLine(
     text: string,
     onError?: (error: Error) => void,
-    context?: TriggerContext
+    context?: TriggerContext,
   ): Promise<void> {
     for (const trigger of this.triggers) {
       const result = trigger.match(text);

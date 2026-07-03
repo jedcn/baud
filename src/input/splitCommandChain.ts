@@ -4,5 +4,8 @@
  */
 export function splitCommandChain(text: string): string[] {
   if (!text.includes(' && ')) return [text];
-  return text.split(' && ').map(cmd => cmd.trim()).filter(cmd => cmd.length > 0);
+  return text
+    .split(' && ')
+    .map((cmd) => cmd.trim())
+    .filter((cmd) => cmd.length > 0);
 }

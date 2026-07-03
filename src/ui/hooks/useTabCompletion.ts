@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 export function findCandidates(history: string[], prefix: string): string[] {
   if (prefix.length === 0) return [];

@@ -1,4 +1,4 @@
-import { Timer, TimerCallback, TimerOptions } from './Timer.js';
+import { Timer, type TimerCallback, type TimerOptions } from './Timer.js';
 
 export class TimerManager {
   private timers: Timer[] = [];
@@ -18,11 +18,7 @@ export class TimerManager {
    * @param options - Optional configuration
    * @returns The created timer's ID
    */
-  createTimer(
-    interval: number,
-    callback: TimerCallback,
-    options?: TimerOptions
-  ): string {
+  createTimer(interval: number, callback: TimerCallback, options?: TimerOptions): string {
     const timer = new Timer(interval, callback, options);
 
     if (this.errorHandler) {

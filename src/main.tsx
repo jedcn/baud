@@ -1,13 +1,18 @@
 #!/usr/bin/env bun
-import React from 'react';
 import { render } from 'ink';
-import { App } from './ui/App.js';
-import { StateProvider } from './state/StateContext.js';
+import React from 'react';
 import { ConfigManager } from './config/ConfigManager.js';
 import { CommandHistoryManager } from './history/CommandHistoryManager.js';
 import type { ConnectionProfile } from './state/AppState.js';
+import { StateProvider } from './state/StateContext.js';
+import { App } from './ui/App.js';
 
-async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: string[]; logBytesFile?: string; logTextFile?: string }> {
+async function parseArgs(): Promise<{
+  profile?: ConnectionProfile;
+  scripts: string[];
+  logBytesFile?: string;
+  logTextFile?: string;
+}> {
   const args = process.argv.slice(2);
   const configManager = ConfigManager.getInstance();
 
@@ -24,7 +29,7 @@ async function parseArgs(): Promise<{ profile?: ConnectionProfile; scripts: stri
       host = args[i + 1];
       i++;
     } else if (args[i] === '--port' && args[i + 1]) {
-      port = parseInt(args[i + 1], 10);
+      port = Number.parseInt(args[i + 1], 10);
       i++;
     } else if (args[i] === '--profile' && args[i + 1]) {
       profileName = args[i + 1];
@@ -113,6 +118,12 @@ const initialHistory = await CommandHistoryManager.getInstance().load();
 
 render(
   <StateProvider>
-    <App profile={profile} scripts={scripts} initialHistory={initialHistory} logBytesFile={logBytesFile} logTextFile={logTextFile} />
-  </StateProvider>
+    <App
+      profile={profile}
+      scripts={scripts}
+      initialHistory={initialHistory}
+      logBytesFile={logBytesFile}
+      logTextFile={logTextFile}
+    />
+  </StateProvider>,
 );

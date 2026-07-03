@@ -2,7 +2,10 @@ export interface TriggerContext {
   isLastLine: boolean;
 }
 
-export type TriggerCallback = (matches?: string[], context?: TriggerContext) => void | Promise<void>;
+export type TriggerCallback = (
+  matches?: string[],
+  context?: TriggerContext,
+) => void | Promise<void>;
 
 export interface TriggerOptions {
   type?: 'literal' | 'regex';
@@ -17,11 +20,7 @@ export class Trigger {
   public enabled: boolean;
   private regex?: RegExp;
 
-  constructor(
-    pattern: string,
-    callback: TriggerCallback,
-    options: TriggerOptions = {}
-  ) {
+  constructor(pattern: string, callback: TriggerCallback, options: TriggerOptions = {}) {
     this.id = Math.random().toString(36).substring(2, 15);
     this.pattern = pattern;
     this.callback = callback;
@@ -47,17 +46,16 @@ export class Trigger {
     if (this.type === 'literal') {
       const matched = text.includes(this.pattern);
       return { matched };
-    } else {
-      const match = this.regex?.exec(text);
-      if (match) {
-        // Return full match and captured groups
-        // matches[0] in JS becomes matches[1] in Lua (full match)
-        // matches[1] in JS becomes matches[2] in Lua (first capture)
-        const captures = Array.from(match);
-        return { matched: true, captures };
-      }
-      return { matched: false };
     }
+    const match = this.regex?.exec(text);
+    if (match) {
+      // Return full match and captured groups
+      // matches[0] in JS becomes matches[1] in Lua (full match)
+      // matches[1] in JS becomes matches[2] in Lua (first capture)
+      const captures = Array.from(match);
+      return { matched: true, captures };
+    }
+    return { matched: false };
   }
 
   /**
@@ -68,7 +66,7 @@ export class Trigger {
   async execute(
     captures?: string[],
     onError?: (error: Error) => void,
-    context?: TriggerContext
+    context?: TriggerContext,
   ): Promise<void> {
     try {
       await this.callback(captures, context);

@@ -1,13 +1,13 @@
+import type { Socket } from 'node:net';
 import { Telnet } from 'telnet-client';
-import type { Socket } from 'net';
-import { ConnectionManager } from './ConnectionManager.js';
-import { decodeCP437 } from '../utils/cp437.js';
-import type { ConnectionProfile } from '../state/AppState.js';
 import type { SessionLogger } from '../logging/SessionLogger.js';
+import type { ConnectionProfile } from '../state/AppState.js';
+import { decodeCP437 } from '../utils/cp437.js';
+import { ConnectionManager } from './ConnectionManager.js';
 
 export class TelnetConnection extends ConnectionManager {
   private client: Telnet;
-  private connected: boolean = false;
+  private connected = false;
   private logger?: SessionLogger;
 
   constructor(logger?: SessionLogger) {
@@ -66,7 +66,7 @@ export class TelnetConnection extends ConnectionManager {
 
   send(data: string): void {
     if (this.connected) {
-      const payload = data + '\r\n';
+      const payload = `${data}\r\n`;
       if (this.logger) {
         this.logger.logSend(payload);
       }

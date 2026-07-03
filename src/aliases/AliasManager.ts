@@ -1,4 +1,4 @@
-import { Alias, AliasCallback, AliasOptions } from './Alias.js';
+import { Alias, type AliasCallback, type AliasOptions } from './Alias.js';
 
 export class AliasManager {
   private aliases: Alias[] = [];
@@ -10,11 +10,7 @@ export class AliasManager {
    * @param options - Optional configuration
    * @returns The created alias's ID
    */
-  createAlias(
-    pattern: string,
-    callback: AliasCallback,
-    options?: AliasOptions
-  ): string {
+  createAlias(pattern: string, callback: AliasCallback, options?: AliasOptions): string {
     const alias = new Alias(pattern, callback, options);
     this.aliases.push(alias);
     return alias.id;
@@ -61,10 +57,7 @@ export class AliasManager {
    * @param text - User input to process
    * @returns True if an alias matched and was executed (input should be consumed)
    */
-  async processInput(
-    text: string,
-    onError?: (error: Error) => void
-  ): Promise<boolean> {
+  async processInput(text: string, onError?: (error: Error) => void): Promise<boolean> {
     for (const alias of this.aliases) {
       const result = alias.match(text);
 
