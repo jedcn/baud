@@ -14,6 +14,8 @@ import { OutboundTriggerManager } from '../triggers/OutboundTriggerManager.js';
 import { AliasManager } from '../aliases/AliasManager.js';
 import { TimerManager } from '../timers/TimerManager.js';
 import { SoundManager } from '../sound/SoundManager.js';
+import { HttpClient } from '../http/HttpClient.js';
+import { createLuaHttpApi } from '../http/luaHttp.js';
 import { CommandHistoryManager } from '../history/CommandHistoryManager.js';
 import { SessionLogger } from '../logging/SessionLogger.js';
 import { TextLogger } from '../logging/TextLogger.js';
@@ -40,6 +42,7 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
   const aliasManager = useMemo(() => new AliasManager(), []);
   const timerManager = useMemo(() => new TimerManager(), []);
   const soundManager = useMemo(() => new SoundManager(), []);
+  const httpClient = useMemo(() => new HttpClient(), []);
   const historyManager = useMemo(() => CommandHistoryManager.getInstance(), []);
 
   const handleHistoryChange = useCallback((commands: string[]) => {
@@ -139,6 +142,8 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
   // Initialize Lua engine and load scripts
   useEffect(() => {
     const initLua = async () => {
+      const httpApi = createLuaHttpApi(httpClient, handleLuaError);
+
       const engine = new LuaEngine({
         send: (text: string) => {
           // Process outbound triggers before sending
@@ -246,6 +251,9 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
         say: (text: string, options?: any) => {
           soundManager.say(text, options);
         },
+        httpRequest: httpApi.httpRequest,
+        httpGet: httpApi.httpGet,
+        httpPost: httpApi.httpPost,
         reloadScript: async () => {
           // Clear all triggers, aliases, timers, and sounds
           triggerManager.clearTriggers();

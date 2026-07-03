@@ -532,6 +532,73 @@ end
 echo("All timers removed")
 ```
 
+#### httpRequest(url, options, callback)
+Make an outbound HTTP(S) request. Requests run in the background and never block
+the UI. Provide a `callback` to inspect the response, or omit it entirely for
+"fire-and-forget" (e.g. sending a notification). Network errors are delivered to
+the callback as a result with `ok = false`; they never crash a script.
+
+The `callback` receives a result table:
+- `res.ok` — `true` when the HTTP status is 2xx
+- `res.status` — HTTP status code (`0` on a network failure)
+- `res.body` — response body as a string
+- `res.error` — error message (only present on network failures)
+
+**Options:**
+- `method` — HTTP method (default `"GET"`)
+- `headers` — table of request headers, e.g. `{ ["Content-Type"] = "application/json" }`
+- `body` — request body string
+- `timeout` — request timeout in milliseconds (default `10000`)
+
+```lua
+httpRequest("https://api.example.com/status", { method = "GET" }, function(res)
+  if res.ok then
+    echo("Status: " .. res.body)
+  else
+    echo("Request failed: " .. tostring(res.error))
+  end
+end)
+```
+
+`httpRequest(url, callback)` is also accepted when you don't need options.
+
+#### httpGet(url, callback)
+Convenience for a GET request. The `callback` is optional.
+
+```lua
+httpGet("https://api.example.com/motd", function(res)
+  echo(res.body)
+end)
+```
+
+#### httpPost(url, body, callback)
+Convenience for a POST request with a string body. The `callback` is optional.
+
+**Push a phone notification with [ntfy.sh](https://ntfy.sh):** subscribe to a
+topic in the ntfy app, then have a trigger notify you when it fires. This is the
+equivalent of `curl -d "message" https://ntfy.sh/<topic>`.
+
+```lua
+-- Fire-and-forget: ping your phone when it's your turn
+createTrigger("It is your turn", function()
+  httpPost("https://ntfy.sh/my-secret-topic", "Your turn in Tele Arena!")
+end)
+```
+
+ntfy notification options (title, priority, tags/emoji) are set via headers, so
+use `httpRequest` when you want them:
+
+```lua
+httpRequest("https://ntfy.sh/my-secret-topic", {
+  method = "POST",
+  headers = { Title = "Tele Arena", Priority = "high", Tags = "crossed_swords" },
+  body = "Your turn!",
+})
+```
+
+**IMPORTANT:** Scripts loaded with `--script` can reach any URL. Only run scripts
+you trust.
+
 ### Example Script
 
 Here's a simple example script (`example.lua`):
@@ -672,9 +739,15 @@ bun test --coverage
 - ✅ `removeTimer()` - Stop and remove timers
 - ✅ `enableTimer()` / `disableTimer()` - Control timer execution
 
+**Phase 7 Complete** - HTTP Requests
+- ✅ `httpRequest()` - Make GET/POST/etc. requests with headers and body
+- ✅ `httpGet()` / `httpPost()` - Convenience helpers
+- ✅ Non-blocking, fire-and-forget or callback with `{ ok, status, body }`
+- ✅ Push phone notifications from triggers (e.g. ntfy.sh)
+
 ### Upcoming Features
 
-**Phase 7+** - SSH, Dynamic UI, and more
+**Phase 8+** - SSH, Dynamic UI, and more
 
 ## Controls
 
