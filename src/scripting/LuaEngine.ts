@@ -1,7 +1,7 @@
-import { LuaFactory, LuaEngine as WasmoonEngine } from 'wasmoon';
 import { Database } from 'bun:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
+import { LuaFactory, type LuaEngine as WasmoonEngine } from 'wasmoon';
 
 export type LuaCallback = (...args: any[]) => void | Promise<void>;
 
@@ -115,8 +115,8 @@ export class LuaEngine {
       const db = new Database(dbPath);
       db.exec('PRAGMA journal_mode = WAL');
       return {
-        execute:  (sql: string, ...params: unknown[]) => db.prepare(sql).run(...params).changes,
-        query:    (sql: string, ...params: unknown[]) => db.prepare(sql).all(...params),
+        execute: (sql: string, ...params: unknown[]) => db.prepare(sql).run(...params).changes,
+        query: (sql: string, ...params: unknown[]) => db.prepare(sql).all(...params),
         queryOne: (sql: string, ...params: unknown[]) => db.prepare(sql).get(...params) ?? null,
         path: dbPath,
       };
@@ -155,7 +155,7 @@ export class LuaEngine {
     try {
       // Set SCRIPT_DIR global so scripts can load other files relative to themselves
       if (filename) {
-        const scriptDir = path.dirname(filename) + '/';
+        const scriptDir = `${path.dirname(filename)}/`;
         this.engine.global.set('SCRIPT_DIR', scriptDir);
       }
 

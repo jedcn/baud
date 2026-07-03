@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, mock, spyOn } from 'bun:test';
+import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
 import fs from 'node:fs';
 import { SoundManager } from './SoundManager.js';
 
@@ -68,7 +68,9 @@ describe('SoundManager', () => {
     it('throws when sound file does not exist', () => {
       const existsSpy = spyOn(fs, 'existsSync').mockReturnValue(false);
       manager.registerSound('alert', '/nonexistent/sound.aiff');
-      expect(() => manager.playSound('alert')).toThrow('Sound file not found: /nonexistent/sound.aiff');
+      expect(() => manager.playSound('alert')).toThrow(
+        'Sound file not found: /nonexistent/sound.aiff',
+      );
       existsSpy.mockRestore();
     });
 
@@ -79,10 +81,10 @@ describe('SoundManager', () => {
       manager.registerSound('alert', '/System/Library/Sounds/Glass.aiff');
       manager.playSound('alert');
 
-      expect(spawnSpy).toHaveBeenCalledWith(
-        ['afplay', '/System/Library/Sounds/Glass.aiff'],
-        { stdout: 'ignore', stderr: 'ignore' },
-      );
+      expect(spawnSpy).toHaveBeenCalledWith(['afplay', '/System/Library/Sounds/Glass.aiff'], {
+        stdout: 'ignore',
+        stderr: 'ignore',
+      });
 
       existsSpy.mockRestore();
       spawnSpy.mockRestore();
@@ -95,10 +97,10 @@ describe('SoundManager', () => {
       manager.registerSound('alert', '/sound.aiff');
       manager.playSound('alert', { volume: 0.5 });
 
-      expect(spawnSpy).toHaveBeenCalledWith(
-        ['afplay', '/sound.aiff', '--volume', '0.5'],
-        { stdout: 'ignore', stderr: 'ignore' },
-      );
+      expect(spawnSpy).toHaveBeenCalledWith(['afplay', '/sound.aiff', '--volume', '0.5'], {
+        stdout: 'ignore',
+        stderr: 'ignore',
+      });
 
       existsSpy.mockRestore();
       spawnSpy.mockRestore();
@@ -111,10 +113,10 @@ describe('SoundManager', () => {
 
       manager.say('hello world');
 
-      expect(spawnSpy).toHaveBeenCalledWith(
-        ['say', 'hello world'],
-        { stdout: 'ignore', stderr: 'ignore' },
-      );
+      expect(spawnSpy).toHaveBeenCalledWith(['say', 'hello world'], {
+        stdout: 'ignore',
+        stderr: 'ignore',
+      });
 
       spawnSpy.mockRestore();
     });
@@ -124,10 +126,10 @@ describe('SoundManager', () => {
 
       manager.say('hello', { voice: 'Samantha' });
 
-      expect(spawnSpy).toHaveBeenCalledWith(
-        ['say', 'hello', '-v', 'Samantha'],
-        { stdout: 'ignore', stderr: 'ignore' },
-      );
+      expect(spawnSpy).toHaveBeenCalledWith(['say', 'hello', '-v', 'Samantha'], {
+        stdout: 'ignore',
+        stderr: 'ignore',
+      });
 
       spawnSpy.mockRestore();
     });
@@ -137,10 +139,10 @@ describe('SoundManager', () => {
 
       manager.say('hello', { rate: 300 });
 
-      expect(spawnSpy).toHaveBeenCalledWith(
-        ['say', 'hello', '-r', '300'],
-        { stdout: 'ignore', stderr: 'ignore' },
-      );
+      expect(spawnSpy).toHaveBeenCalledWith(['say', 'hello', '-r', '300'], {
+        stdout: 'ignore',
+        stderr: 'ignore',
+      });
 
       spawnSpy.mockRestore();
     });
@@ -150,10 +152,10 @@ describe('SoundManager', () => {
 
       manager.say('hello', { voice: 'Daniel', rate: 120 });
 
-      expect(spawnSpy).toHaveBeenCalledWith(
-        ['say', 'hello', '-v', 'Daniel', '-r', '120'],
-        { stdout: 'ignore', stderr: 'ignore' },
-      );
+      expect(spawnSpy).toHaveBeenCalledWith(['say', 'hello', '-v', 'Daniel', '-r', '120'], {
+        stdout: 'ignore',
+        stderr: 'ignore',
+      });
 
       spawnSpy.mockRestore();
     });

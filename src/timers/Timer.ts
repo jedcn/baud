@@ -12,17 +12,13 @@ export class Timer {
   public callback: TimerCallback;
   public repeating: boolean;
   public enabled: boolean;
-  public running: boolean = false;
+  public running = false;
   public name?: string;
   private timeoutId?: ReturnType<typeof setTimeout>;
   private intervalId?: ReturnType<typeof setInterval>;
   private onError?: (error: Error) => void;
 
-  constructor(
-    interval: number,
-    callback: TimerCallback,
-    options: TimerOptions = {}
-  ) {
+  constructor(interval: number, callback: TimerCallback, options: TimerOptions = {}) {
     this.id = Math.random().toString(36).substring(2, 15);
     this.interval = interval;
     this.callback = callback;

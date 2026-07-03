@@ -1,4 +1,4 @@
-import { Trigger, TriggerCallback, TriggerOptions } from './Trigger.js';
+import { Trigger, type TriggerCallback, type TriggerOptions } from './Trigger.js';
 
 /**
  * Manages outbound triggers that fire when commands are sent to the server.
@@ -18,7 +18,7 @@ export class OutboundTriggerManager {
   createOutboundTrigger(
     pattern: string,
     callback: TriggerCallback,
-    options?: TriggerOptions
+    options?: TriggerOptions,
   ): string {
     const trigger = new Trigger(pattern, callback, options);
     this.triggers.push(trigger);
@@ -67,10 +67,7 @@ export class OutboundTriggerManager {
    * @param command - The command being sent
    * @param onError - Optional error handler for Lua errors
    */
-  async processCommand(
-    command: string,
-    onError?: (error: Error) => void
-  ): Promise<void> {
+  async processCommand(command: string, onError?: (error: Error) => void): Promise<void> {
     for (const trigger of this.triggers) {
       const result = trigger.match(command);
       if (result.matched) {

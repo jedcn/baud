@@ -1,5 +1,5 @@
-import React from 'react';
 import { Box, Static, Text } from 'ink';
+import React from 'react';
 import type { OutputLine, TextSegment } from '../state/AppState.js';
 
 function renderSegment(segment: TextSegment, index: number) {
@@ -28,9 +28,7 @@ export function OutputArea({ lines, generation }: OutputAreaProps) {
     <Static key={generation} items={lines}>
       {(line) => (
         <Box key={line.id} paddingX={1}>
-          {line.segments.map((segment, segmentIndex) =>
-            renderSegment(segment, segmentIndex)
-          )}
+          {line.segments.map((segment, segmentIndex) => renderSegment(segment, segmentIndex))}
         </Box>
       )}
     </Static>

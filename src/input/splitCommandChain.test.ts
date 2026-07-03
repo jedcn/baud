@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'bun:test';
+import { describe, expect, it } from 'bun:test';
 import { splitCommandChain } from './splitCommandChain.js';
 
 describe('splitCommandChain', () => {
@@ -27,9 +27,6 @@ describe('splitCommandChain', () => {
   });
 
   it('handles /lua command as first part', () => {
-    expect(splitCommandChain('/lua print("hi") && south')).toEqual([
-      '/lua print("hi")',
-      'south',
-    ]);
+    expect(splitCommandChain('/lua print("hi") && south')).toEqual(['/lua print("hi")', 'south']);
   });
 });

@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import type { ConnectionProfile, ConnectionStatus } from '../state/AppState.js';
 
 export abstract class ConnectionManager extends EventEmitter {

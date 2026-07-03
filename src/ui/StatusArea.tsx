@@ -1,5 +1,5 @@
-import React, { type ReactNode } from 'react';
 import { Box, Text } from 'ink';
+import React, { type ReactNode } from 'react';
 import { useAppState } from '../state/StateContext.js';
 
 export function StatusArea() {
@@ -40,14 +40,10 @@ export function StatusArea() {
     for (let i = 0; i < segments.length; i++) {
       const seg = segments[i];
       elements.push(
-        <Text
-          key={`seg-${i}`}
-          color={seg.fg ?? 'green'}
-        >
+        <Text key={`seg-${i}`} color={seg.fg ?? 'green'}>
           {`${seg.text} `}
-        </Text>
+        </Text>,
       );
-
     }
 
     return (

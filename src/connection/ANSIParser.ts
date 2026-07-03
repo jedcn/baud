@@ -12,33 +12,33 @@ interface StyleState {
 // ANSI color codes to hex colors (traditional terminal palette)
 // Using xterm-256color palette for consistency with classic terminals
 const ANSI_COLORS: Record<number, string> = {
-  30: '#000000',  // Black
-  31: '#cd0000',  // Red
-  32: '#00cd00',  // Green
-  33: '#cdcd00',  // Yellow (brown/orange in many terminals)
-  34: '#0000ee',  // Blue
-  35: '#cd00cd',  // Magenta
-  36: '#00cdcd',  // Cyan
-  37: '#e5e5e5',  // White (light gray)
-  90: '#7f7f7f',  // Bright Black (dark gray)
-  91: '#ff0000',  // Bright Red
-  92: '#00ff00',  // Bright Green
-  93: '#ffff00',  // Bright Yellow
-  94: '#5c5cff',  // Bright Blue
-  95: '#ff00ff',  // Bright Magenta
-  96: '#00ffff',  // Bright Cyan
-  97: '#ffffff',  // Bright White
+  30: '#000000', // Black
+  31: '#cd0000', // Red
+  32: '#00cd00', // Green
+  33: '#cdcd00', // Yellow (brown/orange in many terminals)
+  34: '#0000ee', // Blue
+  35: '#cd00cd', // Magenta
+  36: '#00cdcd', // Cyan
+  37: '#e5e5e5', // White (light gray)
+  90: '#7f7f7f', // Bright Black (dark gray)
+  91: '#ff0000', // Bright Red
+  92: '#00ff00', // Bright Green
+  93: '#ffff00', // Bright Yellow
+  94: '#5c5cff', // Bright Blue
+  95: '#ff00ff', // Bright Magenta
+  96: '#00ffff', // Bright Cyan
+  97: '#ffffff', // Bright White
 };
 
 const ANSI_BG_COLORS: Record<number, string> = {
-  40: '#000000',  // Black
-  41: '#cd0000',  // Red
-  42: '#00cd00',  // Green
-  43: '#cdcd00',  // Yellow (brown/orange)
-  44: '#0000ee',  // Blue
-  45: '#cd00cd',  // Magenta
-  46: '#00cdcd',  // Cyan
-  47: '#e5e5e5',  // White (light gray)
+  40: '#000000', // Black
+  41: '#cd0000', // Red
+  42: '#00cd00', // Green
+  43: '#cdcd00', // Yellow (brown/orange)
+  44: '#0000ee', // Blue
+  45: '#cd00cd', // Magenta
+  46: '#00cdcd', // Cyan
+  47: '#e5e5e5', // White (light gray)
   100: '#7f7f7f', // Bright Black (dark gray)
   101: '#ff0000', // Bright Red
   102: '#00ff00', // Bright Green
@@ -55,8 +55,22 @@ function color256ToHex(index: number): string {
 
   // Standard colors (0-15) - use standard terminal palette
   const standardColors = [
-    '#000000', '#800000', '#008000', '#808000', '#000080', '#800080', '#008080', '#c0c0c0',
-    '#808080', '#ff0000', '#00ff00', '#ffff00', '#0000ff', '#ff00ff', '#00ffff', '#ffffff',
+    '#000000',
+    '#800000',
+    '#008000',
+    '#808000',
+    '#000080',
+    '#800080',
+    '#008080',
+    '#c0c0c0',
+    '#808080',
+    '#ff0000',
+    '#00ff00',
+    '#ffff00',
+    '#0000ff',
+    '#ff00ff',
+    '#00ffff',
+    '#ffffff',
   ];
 
   if (index < 16) {
@@ -99,11 +113,13 @@ export class ANSIParser {
     const currentStyle: StyleState = {};
 
     // Regex to match ANSI escape codes
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: matching the ESC control char is the point of an ANSI parser
     const ansiRegex = /\x1B\[([0-9;]*)m/g;
 
     let lastIndex = 0;
     let match: RegExpExecArray | null;
 
+    // biome-ignore lint/suspicious/noAssignInExpressions: canonical regex exec loop idiom
     while ((match = ansiRegex.exec(text)) !== null) {
       // Add text before this escape code (if any)
       if (match.index > lastIndex) {
@@ -208,6 +224,7 @@ export class ANSIParser {
 
   // Strip all ANSI codes from text
   strip(text: string): string {
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: matching the ESC control char is the point of stripping ANSI codes
     return text.replace(/\x1B\[[0-9;]*m/g, '');
   }
 }

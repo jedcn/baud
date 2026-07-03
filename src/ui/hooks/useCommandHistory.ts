@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 export interface UseCommandHistoryResult {
   history: string[];
@@ -37,20 +37,23 @@ export function useCommandHistory(options: UseCommandHistoryOptions = {}): UseCo
   const [savedInput, setSavedInput] = useState('');
   const [searchDirection, setSearchDirection] = useState<'backward' | 'forward'>('backward');
 
-  const addCommand = useCallback((command: string) => {
-    if (command.trim().length === 0) return;
+  const addCommand = useCallback(
+    (command: string) => {
+      if (command.trim().length === 0) return;
 
-    setHistory((prev) => {
-      // Don't add duplicate consecutive commands
-      if (prev.length > 0 && prev[prev.length - 1] === command) {
-        return prev;
-      }
-      const updated = [...prev, command];
-      onHistoryChange?.(updated);
-      return updated;
-    });
-    setHistoryIndex(-1);
-  }, [onHistoryChange]);
+      setHistory((prev) => {
+        // Don't add duplicate consecutive commands
+        if (prev.length > 0 && prev[prev.length - 1] === command) {
+          return prev;
+        }
+        const updated = [...prev, command];
+        onHistoryChange?.(updated);
+        return updated;
+      });
+      setHistoryIndex(-1);
+    },
+    [onHistoryChange],
+  );
 
   const navigateUp = useCallback(() => {
     setHistoryIndex((current) => {
@@ -94,7 +97,7 @@ export function useCommandHistory(options: UseCommandHistoryOptions = {}): UseCo
       }
       return null;
     },
-    [history]
+    [history],
   );
 
   // Search forward through history for a query
@@ -108,17 +111,20 @@ export function useCommandHistory(options: UseCommandHistoryOptions = {}): UseCo
       }
       return null;
     },
-    [history]
+    [history],
   );
 
   // Start search mode
-  const startSearch = useCallback((currentInput: string, direction: 'backward' | 'forward' = 'backward') => {
-    setSavedInput(currentInput);
-    setIsSearching(true);
-    setSearchDirection(direction);
-    setSearchQuery('');
-    setSearchMatchIndex(null);
-  }, []);
+  const startSearch = useCallback(
+    (currentInput: string, direction: 'backward' | 'forward' = 'backward') => {
+      setSavedInput(currentInput);
+      setIsSearching(true);
+      setSearchDirection(direction);
+      setSearchQuery('');
+      setSearchMatchIndex(null);
+    },
+    [],
+  );
 
   // Update search query and find match
   const updateSearchQuery = useCallback(
@@ -132,7 +138,7 @@ export function useCommandHistory(options: UseCommandHistoryOptions = {}): UseCo
       const matchIndex = findMatchBackward(query, history.length - 1);
       setSearchMatchIndex(matchIndex);
     },
-    [findMatchBackward, history.length]
+    [findMatchBackward, history.length],
   );
 
   // Find the next older match (CTRL-R again)
@@ -170,7 +176,7 @@ export function useCommandHistory(options: UseCommandHistoryOptions = {}): UseCo
       setHistoryIndex(-1);
       return result;
     },
-    [history, searchMatchIndex, savedInput]
+    [history, searchMatchIndex, savedInput],
   );
 
   const currentCommand = historyIndex >= 0 ? history[historyIndex] : undefined;

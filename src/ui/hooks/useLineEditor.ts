@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 export interface UseLineEditorResult {
   text: string;
@@ -20,14 +20,17 @@ export function useLineEditor(initialValue = ''): UseLineEditorResult {
   const [text, setText] = useState(initialValue);
   const [cursor, setCursor] = useState(initialValue.length);
 
-  const insertChar = useCallback((char: string) => {
-    setText((prev) => {
-      const before = prev.slice(0, cursor);
-      const after = prev.slice(cursor);
-      return before + char + after;
-    });
-    setCursor((prev) => prev + char.length);
-  }, [cursor]);
+  const insertChar = useCallback(
+    (char: string) => {
+      setText((prev) => {
+        const before = prev.slice(0, cursor);
+        const after = prev.slice(cursor);
+        return before + char + after;
+      });
+      setCursor((prev) => prev + char.length);
+    },
+    [cursor],
+  );
 
   const deleteChar = useCallback(() => {
     if (cursor >= text.length) return;

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, type ReactNode, type Dispatch } from 'react';
-import { appReducer, initialState, type AppState, type AppAction } from './AppState.js';
+import { type AppAction, type AppState, appReducer, initialState } from './AppState.js';
 
 interface StateContextValue {
   state: AppState;
@@ -15,11 +15,7 @@ interface StateProviderProps {
 export function StateProvider({ children }: StateProviderProps) {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
-  return (
-    <StateContext.Provider value={{ state, dispatch }}>
-      {children}
-    </StateContext.Provider>
-  );
+  return <StateContext.Provider value={{ state, dispatch }}>{children}</StateContext.Provider>;
 }
 
 export function useAppState() {

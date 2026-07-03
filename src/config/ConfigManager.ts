@@ -1,18 +1,18 @@
-import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
-import { ZodSchema } from 'zod';
+import type { ZodSchema } from 'zod';
 import { getConfigDir, getConfigPath } from '../utils/paths.js';
 import {
-  MainConfigSchema,
-  ProfilesConfigSchema,
-  AliasesConfigSchema,
-  TriggersConfigSchema,
-  type MainConfig,
-  type ProfilesConfig,
   type AliasesConfig,
-  type TriggersConfig,
+  AliasesConfigSchema,
   type ConnectionProfile,
+  type MainConfig,
+  MainConfigSchema,
+  type ProfilesConfig,
+  ProfilesConfigSchema,
+  type TriggersConfig,
+  TriggersConfigSchema,
 } from './schema.js';
 
 export class ConfigManager {
@@ -40,11 +40,7 @@ export class ConfigManager {
   /**
    * Load a config file with schema validation
    */
-  private async loadConfig<T>(
-    filename: string,
-    schema: ZodSchema<T>,
-    defaultValue: T
-  ): Promise<T> {
+  private async loadConfig<T>(filename: string, schema: ZodSchema<T>, defaultValue: T): Promise<T> {
     const configPath = getConfigPath(filename);
 
     if (!existsSync(configPath)) {
@@ -113,9 +109,7 @@ export class ConfigManager {
    */
   async getProfile(idOrName: string): Promise<ConnectionProfile | null> {
     const { profiles } = await this.loadProfiles();
-    return (
-      profiles.find((p) => p.id === idOrName || p.name === idOrName) || null
-    );
+    return profiles.find((p) => p.id === idOrName || p.name === idOrName) || null;
   }
 
   /**

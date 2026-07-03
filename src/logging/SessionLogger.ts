@@ -1,4 +1,4 @@
-import { writeFileSync, appendFileSync } from 'fs';
+import { appendFileSync, writeFileSync } from 'node:fs';
 
 export class SessionLogger {
   private filePath: string;

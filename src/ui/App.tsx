@@ -1,26 +1,26 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box } from 'ink';
-import { StatusArea } from './StatusArea.js';
-import { OutputArea } from './OutputArea.js';
-import { InputArea } from './InputArea.js';
-import { useAppState } from '../state/StateContext.js';
-import { TelnetConnection } from '../connection/TelnetConnection.js';
-import { ANSIParser } from '../connection/ANSIParser.js';
-import { LuaEngine } from '../scripting/LuaEngine.js';
-import { ScriptLoader } from '../scripting/ScriptLoader.js';
-import { evaluateStatusFn } from './evaluateStatusFn.js';
-import { TriggerManager } from '../triggers/TriggerManager.js';
-import { OutboundTriggerManager } from '../triggers/OutboundTriggerManager.js';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AliasManager } from '../aliases/AliasManager.js';
-import { TimerManager } from '../timers/TimerManager.js';
-import { SoundManager } from '../sound/SoundManager.js';
+import { ANSIParser } from '../connection/ANSIParser.js';
+import { TelnetConnection } from '../connection/TelnetConnection.js';
+import { CommandHistoryManager } from '../history/CommandHistoryManager.js';
 import { HttpClient } from '../http/HttpClient.js';
 import { createLuaHttpApi } from '../http/luaHttp.js';
-import { CommandHistoryManager } from '../history/CommandHistoryManager.js';
+import { splitCommandChain } from '../input/splitCommandChain.js';
 import { SessionLogger } from '../logging/SessionLogger.js';
 import { TextLogger } from '../logging/TextLogger.js';
+import { LuaEngine } from '../scripting/LuaEngine.js';
+import { ScriptLoader } from '../scripting/ScriptLoader.js';
+import { SoundManager } from '../sound/SoundManager.js';
 import type { ConnectionProfile, StatusSegment } from '../state/AppState.js';
-import { splitCommandChain } from '../input/splitCommandChain.js';
+import { useAppState } from '../state/StateContext.js';
+import { TimerManager } from '../timers/TimerManager.js';
+import { OutboundTriggerManager } from '../triggers/OutboundTriggerManager.js';
+import { TriggerManager } from '../triggers/TriggerManager.js';
+import { InputArea } from './InputArea.js';
+import { OutputArea } from './OutputArea.js';
+import { StatusArea } from './StatusArea.js';
+import { evaluateStatusFn } from './evaluateStatusFn.js';
 
 interface AppProps {
   profile?: ConnectionProfile;
@@ -30,7 +30,13 @@ interface AppProps {
   logTextFile?: string;
 }
 
-export function App({ profile, scripts = [], initialHistory = [], logBytesFile, logTextFile }: AppProps) {
+export function App({
+  profile,
+  scripts = [],
+  initialHistory = [],
+  logBytesFile,
+  logTextFile,
+}: AppProps) {
   const { state, dispatch } = useAppState();
   const ansiParser = useMemo(() => new ANSIParser(), []);
   const [luaEngine, setLuaEngine] = useState<LuaEngine | null>(null);
@@ -45,9 +51,12 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
   const httpClient = useMemo(() => new HttpClient(), []);
   const historyManager = useMemo(() => CommandHistoryManager.getInstance(), []);
 
-  const handleHistoryChange = useCallback((commands: string[]) => {
-    historyManager.save(commands).catch(() => {});
-  }, [historyManager]);
+  const handleHistoryChange = useCallback(
+    (commands: string[]) => {
+      historyManager.save(commands).catch(() => {});
+    },
+    [historyManager],
+  );
 
   // Evaluate the stored status function and dispatch segments
   const evaluateStatus = () => {
@@ -68,6 +77,7 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
     });
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: connection is set up once for the given profile; re-running on every dep change would reconnect
   useEffect(() => {
     if (profile && !state.connection.currentConnection) {
       const bytesLogger = logBytesFile ? new SessionLogger(logBytesFile) : undefined;
@@ -102,7 +112,7 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
         dispatch({
           type: 'CONNECTION_STATUS_CHANGED',
           status: status as any,
-          error
+          error,
         });
       });
 
@@ -110,23 +120,26 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
         dispatch({
           type: 'CONNECTION_STATUS_CHANGED',
           status: 'error',
-          error: error.message
+          error: error.message,
         });
       });
 
-      connection.connect(profile).then(() => {
-        dispatch({
-          type: 'CONNECTION_ESTABLISHED',
-          connection,
-          profile
+      connection
+        .connect(profile)
+        .then(() => {
+          dispatch({
+            type: 'CONNECTION_ESTABLISHED',
+            connection,
+            profile,
+          });
+        })
+        .catch((error) => {
+          dispatch({
+            type: 'CONNECTION_STATUS_CHANGED',
+            status: 'error',
+            error: error.message,
+          });
         });
-      }).catch((error) => {
-        dispatch({
-          type: 'CONNECTION_STATUS_CHANGED',
-          status: 'error',
-          error: error.message
-        });
-      });
 
       return () => {
         connection.disconnect().catch(() => {});
@@ -140,6 +153,7 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
   }, [state.connection.currentConnection]);
 
   // Initialize Lua engine and load scripts
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the engine is initialized once and only reloads when the script list changes
   useEffect(() => {
     const initLua = async () => {
       const httpApi = createLuaHttpApi(httpClient, handleLuaError);
@@ -372,9 +386,10 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
           });
         } else if (result.result !== undefined && result.result !== null) {
           // Display the result if there is one
-          const resultText = typeof result.result === 'object'
-            ? JSON.stringify(result.result, null, 2)
-            : String(result.result);
+          const resultText =
+            typeof result.result === 'object'
+              ? JSON.stringify(result.result, null, 2)
+              : String(result.result);
           dispatch({
             type: 'OUTPUT_LINE_RECEIVED',
             line: resultText,
@@ -425,8 +440,18 @@ export function App({ profile, scripts = [], initialHistory = [], logBytesFile, 
     <>
       <OutputArea lines={state.output.lines} generation={state.output.generation} />
       <Box flexDirection="column" borderStyle="round" borderColor="cyan">
-        <InputArea onSubmit={handleSubmit} initialHistory={initialHistory} onHistoryChange={handleHistoryChange} />
-        <Box borderStyle="single" borderColor="gray" borderBottom={false} borderLeft={false} borderRight={false} />
+        <InputArea
+          onSubmit={handleSubmit}
+          initialHistory={initialHistory}
+          onHistoryChange={handleHistoryChange}
+        />
+        <Box
+          borderStyle="single"
+          borderColor="gray"
+          borderBottom={false}
+          borderLeft={false}
+          borderRight={false}
+        />
         <StatusArea />
       </Box>
     </>

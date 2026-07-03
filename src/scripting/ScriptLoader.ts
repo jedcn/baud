@@ -1,7 +1,7 @@
-import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
-import { LuaEngine } from './LuaEngine.js';
+import type { LuaEngine } from './LuaEngine.js';
 
 export class ScriptLoader {
   private luaEngine: LuaEngine;
@@ -54,7 +54,9 @@ export class ScriptLoader {
    * @param scriptPaths - Array of paths to .lua files
    * @returns Array of results for each script
    */
-  async loadScripts(scriptPaths: string[]): Promise<Array<{ path: string; success: boolean; error?: string }>> {
+  async loadScripts(
+    scriptPaths: string[],
+  ): Promise<Array<{ path: string; success: boolean; error?: string }>> {
     const results = [];
 
     for (const scriptPath of scriptPaths) {

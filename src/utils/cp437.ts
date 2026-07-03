@@ -2,6 +2,7 @@
 // Characters 0-127 are standard ASCII
 // Characters 128-255 are mapped below
 
+// biome-ignore format: keep the mapping as a compact, readable lookup grid
 const CP437_TO_UNICODE: Record<number, string> = {
   128: 'Ç', 129: 'ü', 130: 'é', 131: 'â', 132: 'ä', 133: 'à', 134: 'å', 135: 'ç',
   136: 'ê', 137: 'ë', 138: 'è', 139: 'ï', 140: 'î', 141: 'ì', 142: 'Ä', 143: 'Å',
