@@ -56,6 +56,9 @@ export interface LuaAPI {
   playSound: (name: string, options?: any) => void;
   getSounds: () => SoundInfo[];
   say: (text: string, options?: any) => void;
+  httpRequest: (url: string, optionsOrCallback?: any, callback?: LuaCallback) => void;
+  httpGet: (url: string, callback?: LuaCallback) => void;
+  httpPost: (url: string, body: string, callback?: LuaCallback) => void;
 }
 
 export class LuaEngine {
@@ -104,6 +107,9 @@ export class LuaEngine {
     this.engine.global.set('playSound', this.api.playSound);
     this.engine.global.set('getSounds', this.api.getSounds);
     this.engine.global.set('say', this.api.say);
+    this.engine.global.set('httpRequest', this.api.httpRequest);
+    this.engine.global.set('httpGet', this.api.httpGet);
+    this.engine.global.set('httpPost', this.api.httpPost);
     this.engine.global.set('dbOpen', (name: string) => {
       const dbPath = path.join(process.cwd(), name);
       const db = new Database(dbPath);
