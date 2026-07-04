@@ -5,6 +5,32 @@ import { LuaFactory, type LuaEngine as WasmoonEngine } from 'wasmoon';
 
 export type LuaCallback = (...args: any[]) => void | Promise<void>;
 
+/**
+ * The SQLite handle exposed to Lua scripts by `dbOpen`.
+ *
+ * wasmoon marshals JS `null` to a *truthy* Lua userdata, not `nil`, so a SQL
+ * NULL — a missing row, or a NULL column value — would read as truthy in Lua:
+ * `if row then` and `while queryOne(...)` would never see "no result" (the
+ * latter loops forever). We convert every null to `undefined`, which wasmoon
+ * does push as Lua `nil`, so the db API behaves the way Lua scripts expect.
+ */
+export function createDbApi(db: Database, dbPath?: string) {
+  const toLua = (row: Record<string, unknown> | null | undefined) => {
+    if (row == null) return undefined;
+    const out: Record<string, unknown> = {};
+    for (const key in row) out[key] = row[key] ?? undefined;
+    return out;
+  };
+  return {
+    execute: (sql: string, ...params: unknown[]) => db.prepare(sql).run(...params).changes,
+    query: (sql: string, ...params: unknown[]) =>
+      (db.prepare(sql).all(...params) as Record<string, unknown>[]).map(toLua),
+    queryOne: (sql: string, ...params: unknown[]) =>
+      toLua(db.prepare(sql).get(...params) as Record<string, unknown> | null),
+    path: dbPath,
+  };
+}
+
 export interface TimerInfo {
   id: string;
   interval: number;
@@ -114,12 +140,7 @@ export class LuaEngine {
       const dbPath = path.join(process.cwd(), name);
       const db = new Database(dbPath);
       db.exec('PRAGMA journal_mode = WAL');
-      return {
-        execute: (sql: string, ...params: unknown[]) => db.prepare(sql).run(...params).changes,
-        query: (sql: string, ...params: unknown[]) => db.prepare(sql).all(...params),
-        queryOne: (sql: string, ...params: unknown[]) => db.prepare(sql).get(...params) ?? null,
-        path: dbPath,
-      };
+      return createDbApi(db, dbPath);
     });
   }
 
