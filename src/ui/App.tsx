@@ -58,6 +58,17 @@ export function App({
     [historyManager],
   );
 
+  // Read live literal alias names for TAB completion. Aliases populate asynchronously
+  // after scripts load, so this getter is called at TAB-press time rather than snapshotting.
+  const getAliasNames = useCallback(
+    () =>
+      aliasManager
+        .getAliases()
+        .filter((a) => a.enabled && a.type === 'literal')
+        .map((a) => a.pattern),
+    [aliasManager],
+  );
+
   // Evaluate the stored status function and dispatch segments
   const evaluateStatus = () => {
     const fn = statusFnRef.current;
@@ -444,6 +455,7 @@ export function App({
           onSubmit={handleSubmit}
           initialHistory={initialHistory}
           onHistoryChange={handleHistoryChange}
+          getAliasNames={getAliasNames}
         />
         <Box
           borderStyle="single"

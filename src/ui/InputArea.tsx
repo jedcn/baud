@@ -9,9 +9,15 @@ interface InputAreaProps {
   onSubmit: (text: string) => void | Promise<void>;
   initialHistory?: string[];
   onHistoryChange?: (commands: string[]) => void;
+  getAliasNames?: () => string[];
 }
 
-export function InputArea({ onSubmit, initialHistory, onHistoryChange }: InputAreaProps) {
+export function InputArea({
+  onSubmit,
+  initialHistory,
+  onHistoryChange,
+  getAliasNames,
+}: InputAreaProps) {
   const editor = useLineEditor();
   const history = useCommandHistory({ initialHistory, onHistoryChange });
   const completion = useTabCompletion();
@@ -97,7 +103,11 @@ export function InputArea({ onSubmit, initialHistory, onHistoryChange }: InputAr
     // TAB - prefix-based autocomplete from history
     if (key.tab) {
       if (!completion.isCompleting) {
-        const first = completion.startCompletion(editor.text, history.history);
+        const first = completion.startCompletion(
+          editor.text,
+          history.history,
+          getAliasNames?.() ?? [],
+        );
         if (first !== undefined) {
           editor.setText(first);
           editor.setCursor(first.length);
