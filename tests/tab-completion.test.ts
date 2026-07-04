@@ -1,5 +1,8 @@
 import { test, expect, describe } from 'bun:test';
-import { findCandidates } from '../src/ui/hooks/useTabCompletion.js';
+import {
+  findCandidates,
+  findCompletionCandidates,
+} from '../src/ui/hooks/useTabCompletion.js';
 
 describe('findCandidates', () => {
   test('empty prefix returns []', () => {
@@ -86,5 +89,62 @@ describe('cycling workflow simulation', () => {
     // Wrap
     idx = (idx + 1) % candidates.length;
     expect(candidates[idx]).toBe('connect server');
+  });
+});
+
+describe('findCompletionCandidates', () => {
+  test('empty prefix returns []', () => {
+    expect(findCompletionCandidates(['greetall'], ['greetall'], '')).toEqual([]);
+  });
+
+  test('alias-only match (empty history) returns the alias name', () => {
+    expect(findCompletionCandidates([], ['greetall', 'gather'], 'gre')).toEqual(['greetall']);
+  });
+
+  test('history matches come before alias matches for the same prefix', () => {
+    const history = ['greet bob'];
+    const aliases = ['greetall'];
+    expect(findCompletionCandidates(history, aliases, 'gre')).toEqual(['greet bob', 'greetall']);
+  });
+
+  test('dedup — alias equal to a history entry appears once (from history)', () => {
+    const history = ['look', 'greetall'];
+    const aliases = ['greetall'];
+    expect(findCompletionCandidates(history, aliases, 'gre')).toEqual(['greetall']);
+  });
+
+  test('prefix filtering applies to alias names — mid-string alias excluded', () => {
+    const aliases = ['regreet', 'greetall'];
+    expect(findCompletionCandidates([], aliases, 'gre')).toEqual(['greetall']);
+  });
+
+  test('alias order is preserved as provided', () => {
+    const aliases = ['gamma', 'gather', 'gaze'];
+    expect(findCompletionCandidates([], aliases, 'ga')).toEqual(['gamma', 'gather', 'gaze']);
+  });
+
+  test('history most-recent-first ordering is preserved ahead of aliases', () => {
+    const history = ['go north', 'look', 'go south'];
+    const aliases = ['gossip'];
+    expect(findCompletionCandidates(history, aliases, 'go')).toEqual([
+      'go south',
+      'go north',
+      'gossip',
+    ]);
+  });
+
+  test('combined list cycles through history then aliases and wraps', () => {
+    const history = ['go south'];
+    const aliases = ['gossip', 'gather'];
+    const candidates = findCompletionCandidates(history, aliases, 'go');
+    expect(candidates).toEqual(['go south', 'gossip']);
+
+    let idx = 0;
+    expect(candidates[idx]).toBe('go south');
+    idx = (idx + 1) % candidates.length;
+    expect(candidates[idx]).toBe('gossip');
+    // Wrap back to first (history)
+    idx = (idx + 1) % candidates.length;
+    expect(candidates[idx]).toBe('go south');
   });
 });
