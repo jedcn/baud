@@ -440,6 +440,19 @@ Each outbound trigger object contains:
 - `type` - `"literal"` or `"regex"`
 - `enabled` - Whether the trigger is active
 
+#### removeTrigger(id)
+Remove an inbound trigger by its ID. Useful for one-shot triggers that should
+fire only once, then tear themselves down.
+
+```lua
+local id
+id = createTrigger("You have been summoned!", function()
+  echo("Got the summons!")
+  removeTrigger(id)  -- fire once, then stop matching
+end)
+-- Returns true if the trigger was found and removed, false otherwise.
+```
+
 #### removeTimer(id)
 Stop and remove a timer by its ID.
 
@@ -727,6 +740,7 @@ bun test --coverage
 **Phase 5 Complete** - Triggers & Aliases
 - ✅ `createTrigger()` - Match server output with literal or regex patterns
 - ✅ `createAlias()` - Match user input with literal or regex patterns
+- ✅ `removeTrigger()` - Remove an inbound trigger by ID
 - ✅ Capture groups for dynamic pattern matching
 - ✅ Trigger options: enabled
 - ✅ Pure Lua implementation (no JSON!)
