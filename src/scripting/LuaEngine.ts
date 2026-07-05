@@ -107,12 +107,21 @@ export class LuaEngine {
     this.engine.global.set('send', this.api.send);
     this.engine.global.set('echo', this.api.echo);
 
-    // Override dofile to read from real filesystem
-    const engine = this.engine;
-    this.engine.global.set('dofile', (filepath: string) => {
-      const code = fs.readFileSync(filepath, 'utf-8');
-      return engine.doStringSync(code);
-    });
+    // Override dofile to read from the real filesystem. The file's chunk is
+    // loaded and run *in Lua* (via load()()), NOT through doStringSync: the
+    // latter marshals the module's return value through JS, so a returned table
+    // becomes a JS proxy and every `nil` its methods return comes back to Lua as
+    // a truthy `js_null` userdata (breaking `if x then` / `while x`). Reading the
+    // file is the only part that needs JS.
+    this.engine.global.set('__dofileRead', (filepath: string) =>
+      fs.readFileSync(filepath, 'utf-8'),
+    );
+    this.engine.doStringSync(`
+      function dofile(path)
+        local chunk = assert(load(__dofileRead(path), "@" .. path))
+        return chunk()
+      end
+    `);
     this.engine.global.set('createTrigger', this.api.createTrigger);
     this.engine.global.set('createOutboundTrigger', this.api.createOutboundTrigger);
     this.engine.global.set('createAlias', this.api.createAlias);
