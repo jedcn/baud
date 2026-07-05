@@ -236,6 +236,9 @@ export function App({
             enabled: t.enabled,
           }));
         },
+        removeTrigger: (id: string) => {
+          return triggerManager.removeTrigger(id);
+        },
         removeTimer: (id: string) => {
           return timerManager.removeTimer(id);
         },

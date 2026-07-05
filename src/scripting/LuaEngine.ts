@@ -72,6 +72,7 @@ export interface LuaAPI {
   getAliases: () => AliasInfo[];
   getTriggers: () => TriggerInfo[];
   getOutboundTriggers: () => TriggerInfo[];
+  removeTrigger: (id: string) => boolean;
   removeTimer: (id: string) => boolean;
   enableTimer: (id: string) => void;
   disableTimer: (id: string) => void;
@@ -130,6 +131,7 @@ export class LuaEngine {
     this.engine.global.set('getAliases', this.api.getAliases);
     this.engine.global.set('getTriggers', this.api.getTriggers);
     this.engine.global.set('getOutboundTriggers', this.api.getOutboundTriggers);
+    this.engine.global.set('removeTrigger', this.api.removeTrigger);
     this.engine.global.set('removeTimer', this.api.removeTimer);
     this.engine.global.set('enableTimer', this.api.enableTimer);
     this.engine.global.set('disableTimer', this.api.disableTimer);
