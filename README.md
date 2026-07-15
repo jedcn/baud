@@ -112,33 +112,14 @@ bun run src/main.tsx --profile myserver --log-text ./session.txt --log-bytes ./s
 If a server drops the connection ungracefully — it crashes, the network path
 dies, or a firewall/NAT silently evicts the flow — your machine may never
 receive a TCP FIN or RST. Without one, baud would sit in `connected` state
-forever, waiting on bytes that never arrive; the only recovery was CTRL-C.
+forever, waiting on bytes that never arrive.
 
-baud now guards against this in two ways:
-
-- **TCP keepalive** is enabled on every connection, so the OS probes idle
-  sockets and a genuinely dead one eventually surfaces as a normal disconnect.
-- **An idle watchdog** measures the gap since the last byte received. After
-  `--idle-warn` seconds it shows a visible warning; after `--idle-timeout`
-  seconds it prints the reason and **exits with a non-zero status**, so a
-  supervisor (a shell `until` loop, systemd, etc.) can restart baud
-  automatically instead of you babysitting a hung process.
-
-```bash
-# Warn after 60s of silence, treat as dead after 180s
-bun run src/main.tsx --profile myserver --idle-warn 60 --idle-timeout 180
-
-# Disable the watchdog entirely
-bun run src/main.tsx --profile myserver --idle-timeout 0
-```
-
-Defaults: `--idle-warn 120`, `--idle-timeout 300`. Detection is purely
-time-based, so set `--idle-timeout` comfortably above the longest silence a
-healthy server produces. A minimal supervisor loop:
-
-```bash
-until baud --profile myserver; do echo "baud exited, restarting..."; sleep 2; done
-```
+baud guards against this with **TCP keepalive**, which is enabled on every
+connection: the OS probes idle sockets, and a genuinely dead one eventually
+surfaces as a normal disconnect through the usual `close`/`error` path. This
+distinguishes a dead connection from one that is merely quiet — a healthy
+server that simply has nothing to say (you're reading, idling at a menu, or
+away) is left alone.
 
 ### Help
 

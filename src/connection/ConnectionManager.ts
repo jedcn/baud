@@ -20,14 +20,4 @@ export abstract class ConnectionManager extends EventEmitter {
   protected emitError(error: Error) {
     this.emit('error', error);
   }
-
-  /** Inbound silence has crossed the warning threshold but is not yet fatal. */
-  protected emitIdleWarning(idleMs: number) {
-    this.emit('idle-warning', idleMs);
-  }
-
-  /** Inbound silence has crossed the dead threshold; connection presumed lost. */
-  protected emitStalled(reason: string) {
-    this.emit('stalled', reason);
-  }
 }
