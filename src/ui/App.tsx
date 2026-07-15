@@ -28,8 +28,6 @@ interface AppProps {
   initialHistory?: string[];
   logBytesFile?: string;
   logTextFile?: string;
-  idleWarnMs?: number;
-  idleDeadMs?: number;
 }
 
 export function App({
@@ -38,8 +36,6 @@ export function App({
   initialHistory = [],
   logBytesFile,
   logTextFile,
-  idleWarnMs,
-  idleDeadMs,
 }: AppProps) {
   const { state, dispatch } = useAppState();
   const ansiParser = useMemo(() => new ANSIParser(), []);
@@ -98,11 +94,7 @@ export function App({
       const bytesLogger = logBytesFile ? new SessionLogger(logBytesFile) : undefined;
       const textLogger = logTextFile ? new TextLogger(logTextFile) : undefined;
       textLoggerRef.current = textLogger;
-      const connection = new TelnetConnection({
-        logger: bytesLogger,
-        idleWarnMs,
-        idleDeadMs,
-      });
+      const connection = new TelnetConnection(bytesLogger);
 
       connection.on('data', async (data: string) => {
         // Split by newlines and emit each line separately
@@ -141,35 +133,6 @@ export function App({
           status: 'error',
           error: error.message,
         });
-      });
-
-      // Inbound silence crossed the warn threshold: surface it so the user
-      // isn't staring at a frozen screen wondering whether baud is stuck.
-      connection.on('idle-warning', (idleMs: number) => {
-        const seconds = Math.round(idleMs / 1000);
-        const message = `⚠ No data received for ${seconds}s — connection may be stalled.`;
-        textLoggerRef.current?.logRecv(message);
-        dispatch({
-          type: 'OUTPUT_LINE_RECEIVED',
-          line: message,
-          segments: [{ text: message, color: '#ffff00' }],
-        });
-      });
-
-      // Inbound silence crossed the dead threshold: report the reason to the
-      // screen and logs, then exit non-zero so a supervisor can restart baud
-      // instead of it hanging indefinitely on a half-open socket.
-      connection.on('stalled', (reason: string) => {
-        const message = `Connection stalled: ${reason}`;
-        textLoggerRef.current?.logRecv(message);
-        dispatch({
-          type: 'OUTPUT_LINE_RECEIVED',
-          line: message,
-          segments: [{ text: message, color: '#ff0000' }],
-        });
-        connection.disconnect().catch(() => {});
-        // Give Ink a tick to flush the message before we tear down.
-        setTimeout(() => process.exit(1), 100);
       });
 
       connection
