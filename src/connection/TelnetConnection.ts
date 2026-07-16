@@ -1,5 +1,6 @@
 import type { Socket } from 'node:net';
 import { Telnet } from 'telnet-client';
+import type { SessionDiagnostics } from '../logging/SessionDiagnostics.js';
 import type { SessionLogger } from '../logging/SessionLogger.js';
 import type { ConnectionProfile } from '../state/AppState.js';
 import { decodeCP437 } from '../utils/cp437.js';
@@ -12,11 +13,18 @@ export class TelnetConnection extends ConnectionManager {
   private client: Telnet;
   private connected = false;
   private logger?: SessionLogger;
+  private diagnostics?: SessionDiagnostics;
+  /** Set when the user asks us to disconnect, so the ensuing 'close' event is
+   * classified as a normal quit rather than a server/network drop. */
+  private userInitiated = false;
+  /** Whether a socket error fired during this connection's life. */
+  private sawError = false;
 
-  constructor(logger?: SessionLogger) {
+  constructor(logger?: SessionLogger, diagnostics?: SessionDiagnostics) {
     super();
     this.client = new Telnet();
     this.logger = logger;
+    this.diagnostics = diagnostics;
   }
 
   async connect(profile: ConnectionProfile): Promise<void> {
@@ -28,16 +36,28 @@ export class TelnetConnection extends ConnectionManager {
         if (this.logger) {
           this.logger.logRecv(buffer);
         }
+        this.diagnostics?.addBytesReceived(buffer.length);
         const text = decodeCP437(buffer);
         this.emitData(text);
       });
 
       this.client.on('close', () => {
         this.connected = false;
+        // Classify why the socket closed for the end-of-session diagnostics:
+        // a close we asked for is a normal quit; a close preceded by an error
+        // is a network drop; anything else is the server hanging up cleanly.
+        const reason = this.userInitiated
+          ? 'user-quit'
+          : this.sawError
+            ? 'network-error'
+            : 'server-closed';
+        this.diagnostics?.end(reason);
         this.emitStatus('disconnected');
       });
 
       this.client.on('error', (error: Error) => {
+        this.sawError = true;
+        this.diagnostics?.recordError(error.message);
         this.emitStatus('error', error.message);
         this.emitError(error);
       });
@@ -51,6 +71,7 @@ export class TelnetConnection extends ConnectionManager {
       });
 
       this.connected = true;
+      this.diagnostics?.markConnected();
 
       // Ask the OS to probe idle connections so a half-open socket (server
       // crashed, dead network path, NAT/firewall eviction) eventually surfaces
@@ -61,6 +82,8 @@ export class TelnetConnection extends ConnectionManager {
     } catch (error) {
       this.connected = false;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.diagnostics?.recordError(errorMessage);
+      this.diagnostics?.end('connect-failed', errorMessage);
       this.emitStatus('error', errorMessage);
       throw error;
     }
@@ -68,6 +91,7 @@ export class TelnetConnection extends ConnectionManager {
 
   async disconnect(): Promise<void> {
     if (this.connected) {
+      this.userInitiated = true;
       await this.client.end();
       this.connected = false;
     }
@@ -79,6 +103,7 @@ export class TelnetConnection extends ConnectionManager {
       if (this.logger) {
         this.logger.logSend(payload);
       }
+      this.diagnostics?.addBytesSent(Buffer.byteLength(payload));
       // Write straight to the underlying socket rather than going through
       // telnet-client's `send()`. That method wraps every call in a Promise
       // and attaches a one-shot 'data' listener to capture the command's
