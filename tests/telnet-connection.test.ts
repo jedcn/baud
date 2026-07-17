@@ -39,11 +39,15 @@ function makeConnection() {
 // lets us emit lifecycle events and assert how the session diagnostics
 // classify the disconnect.
 async function makeConnectedConnection() {
+  const socketWrites: Buffer[] = [];
   const socket = new EventEmitter() as EventEmitter & {
-    write: (data: string) => boolean;
+    write: (data: string | Buffer) => boolean;
     setKeepAlive: (enable: boolean, delay: number) => void;
   };
-  socket.write = () => true;
+  socket.write = (data: string | Buffer) => {
+    socketWrites.push(typeof data === 'string' ? Buffer.from(data) : data);
+    return true;
+  };
   socket.setKeepAlive = () => {};
 
   const client = new EventEmitter() as EventEmitter & {
@@ -73,7 +77,7 @@ async function makeConnectedConnection() {
     port: 4000,
   });
 
-  return { conn, client, diagnostics };
+  return { conn, client, diagnostics, socketWrites };
 }
 
 describe('TelnetConnection diagnostics', () => {
@@ -105,6 +109,22 @@ describe('TelnetConnection diagnostics', () => {
     const report = diagnostics.report();
     expect(report).toContain('Bytes recv:  5');
     expect(report).toContain('Bytes sent:  4'); // "hi\r\n"
+  });
+
+  test('answers Telnet negotiation by writing a reply to the socket', async () => {
+    const { client, socketWrites } = await makeConnectedConnection();
+    // Server: IAC DO SGA (255 253 3) mixed with real data.
+    client.emit('data', Buffer.from([0x68, 0x69, 255, 253, 3])); // "hi" + IAC DO SGA
+    expect(socketWrites.length).toBe(1);
+    expect([...socketWrites[0]]).toEqual([255, 251, 3]); // IAC WILL SGA
+  });
+
+  test('does not surface raw IAC bytes as emitted data', async () => {
+    const { conn, client } = await makeConnectedConnection();
+    const received: string[] = [];
+    conn.on('data', (text: string) => received.push(text));
+    client.emit('data', Buffer.from([0x68, 0x69, 255, 253, 3])); // "hi" + IAC DO SGA
+    expect(received).toEqual(['hi']); // negotiation stripped, only "hi" shown
   });
 });
 

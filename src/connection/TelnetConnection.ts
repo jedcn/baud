@@ -5,6 +5,7 @@ import type { SessionLogger } from '../logging/SessionLogger.js';
 import type { ConnectionProfile } from '../state/AppState.js';
 import { decodeCP437 } from '../utils/cp437.js';
 import { ConnectionManager } from './ConnectionManager.js';
+import { TelnetProtocol } from './TelnetProtocol.js';
 
 /** How often the OS should send TCP keepalive probes on an idle socket. */
 const KEEPALIVE_DELAY_MS = 30_000;
@@ -13,6 +14,7 @@ export class TelnetConnection extends ConnectionManager {
   private client: Telnet;
   private connected = false;
   private logger?: SessionLogger;
+  private telnet = new TelnetProtocol();
   private diagnostics?: SessionDiagnostics;
   /** Set when the user asks us to disconnect, so the ensuing 'close' event is
    * classified as a normal quit rather than a server/network drop. */
@@ -37,8 +39,20 @@ export class TelnetConnection extends ConnectionManager {
           this.logger.logRecv(buffer);
         }
         this.diagnostics?.addBytesReceived(buffer.length);
-        const text = decodeCP437(buffer);
-        this.emitData(text);
+
+        // Answer Telnet option negotiation and strip IAC sequences before the
+        // bytes are decoded/displayed. Without this the server sees a client
+        // that never completes the handshake (and idle-drops it), and the raw
+        // IAC bytes render as garbage.
+        const { data, response } = this.telnet.receive(buffer);
+        if (response.length > 0) {
+          this.socket?.write(response);
+          this.logger?.logSend(response);
+          this.diagnostics?.addBytesSent(response.length);
+        }
+        if (data.length > 0) {
+          this.emitData(decodeCP437(data));
+        }
       });
 
       this.client.on('close', () => {
