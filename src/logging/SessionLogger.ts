@@ -12,8 +12,8 @@ export class SessionLogger {
     this.writeEntry('RECV', buffer);
   }
 
-  logSend(data: string): void {
-    const buffer = Buffer.from(data);
+  logSend(data: string | Buffer): void {
+    const buffer = typeof data === 'string' ? Buffer.from(data) : data;
     this.writeEntry('SEND', buffer);
   }
 

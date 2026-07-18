@@ -1,22 +1,29 @@
 import type { Socket } from 'node:net';
 import { Telnet } from 'telnet-client';
+import type { SessionDiagnostics } from '../logging/SessionDiagnostics.js';
 import type { SessionLogger } from '../logging/SessionLogger.js';
 import type { ConnectionProfile } from '../state/AppState.js';
 import { decodeCP437 } from '../utils/cp437.js';
 import { ConnectionManager } from './ConnectionManager.js';
-
-/** How often the OS should send TCP keepalive probes on an idle socket. */
-const KEEPALIVE_DELAY_MS = 30_000;
+import { TelnetProtocol } from './TelnetProtocol.js';
 
 export class TelnetConnection extends ConnectionManager {
   private client: Telnet;
   private connected = false;
   private logger?: SessionLogger;
+  private telnet = new TelnetProtocol();
+  private diagnostics?: SessionDiagnostics;
+  /** Set when the user asks us to disconnect, so the ensuing 'close' event is
+   * classified as a normal quit rather than a server/network drop. */
+  private userInitiated = false;
+  /** Whether a socket error fired during this connection's life. */
+  private sawError = false;
 
-  constructor(logger?: SessionLogger) {
+  constructor(logger?: SessionLogger, diagnostics?: SessionDiagnostics) {
     super();
     this.client = new Telnet();
     this.logger = logger;
+    this.diagnostics = diagnostics;
   }
 
   async connect(profile: ConnectionProfile): Promise<void> {
@@ -28,16 +35,40 @@ export class TelnetConnection extends ConnectionManager {
         if (this.logger) {
           this.logger.logRecv(buffer);
         }
-        const text = decodeCP437(buffer);
-        this.emitData(text);
+        this.diagnostics?.addBytesReceived(buffer.length);
+
+        // Answer Telnet option negotiation and strip IAC sequences before the
+        // bytes are decoded/displayed. Without this the server sees a client
+        // that never completes the handshake (and idle-drops it), and the raw
+        // IAC bytes render as garbage.
+        const { data, response } = this.telnet.receive(buffer);
+        if (response.length > 0) {
+          this.socket?.write(response);
+          this.logger?.logSend(response);
+          this.diagnostics?.addBytesSent(response.length);
+        }
+        if (data.length > 0) {
+          this.emitData(decodeCP437(data));
+        }
       });
 
       this.client.on('close', () => {
         this.connected = false;
+        // Classify why the socket closed for the end-of-session diagnostics:
+        // a close we asked for is a normal quit; a close preceded by an error
+        // is a network drop; anything else is the server hanging up cleanly.
+        const reason = this.userInitiated
+          ? 'user-quit'
+          : this.sawError
+            ? 'network-error'
+            : 'server-closed';
+        this.diagnostics?.end(reason);
         this.emitStatus('disconnected');
       });
 
       this.client.on('error', (error: Error) => {
+        this.sawError = true;
+        this.diagnostics?.recordError(error.message);
         this.emitStatus('error', error.message);
         this.emitError(error);
       });
@@ -51,16 +82,23 @@ export class TelnetConnection extends ConnectionManager {
       });
 
       this.connected = true;
+      this.diagnostics?.markConnected();
 
-      // Ask the OS to probe idle connections so a half-open socket (server
-      // crashed, dead network path, NAT/firewall eviction) eventually surfaces
-      // as a real 'error'/'close' instead of blocking on a read forever.
-      this.socket?.setKeepAlive(true, KEEPALIVE_DELAY_MS);
+      // Note: we deliberately do NOT enable TCP keepalive here. A 30s keepalive
+      // probe was tripping up legacy server TCP stacks (e.g. "MajorTCP/IP by
+      // Vircom" fronting a MajorBBS): ~30s after the last activity the server
+      // responded to the probe by closing the connection, so idle sessions died
+      // within a minute. A stock `telnet` sends no keepalive and stays
+      // connected indefinitely; matching that behaviour fixes the drops.
+      // Dead connections still surface via the server's own FIN or a socket
+      // error. See git history for the keepalive experiment that added this.
 
       this.emitStatus('connected');
     } catch (error) {
       this.connected = false;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.diagnostics?.recordError(errorMessage);
+      this.diagnostics?.end('connect-failed', errorMessage);
       this.emitStatus('error', errorMessage);
       throw error;
     }
@@ -68,6 +106,7 @@ export class TelnetConnection extends ConnectionManager {
 
   async disconnect(): Promise<void> {
     if (this.connected) {
+      this.userInitiated = true;
       await this.client.end();
       this.connected = false;
     }
@@ -79,6 +118,7 @@ export class TelnetConnection extends ConnectionManager {
       if (this.logger) {
         this.logger.logSend(payload);
       }
+      this.diagnostics?.addBytesSent(Buffer.byteLength(payload));
       // Write straight to the underlying socket rather than going through
       // telnet-client's `send()`. That method wraps every call in a Promise
       // and attaches a one-shot 'data' listener to capture the command's

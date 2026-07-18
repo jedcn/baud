@@ -7,6 +7,7 @@ import { CommandHistoryManager } from '../history/CommandHistoryManager.js';
 import { HttpClient } from '../http/HttpClient.js';
 import { createLuaHttpApi } from '../http/luaHttp.js';
 import { splitCommandChain } from '../input/splitCommandChain.js';
+import { SessionDiagnostics } from '../logging/SessionDiagnostics.js';
 import { SessionLogger } from '../logging/SessionLogger.js';
 import { TextLogger } from '../logging/TextLogger.js';
 import { LuaEngine } from '../scripting/LuaEngine.js';
@@ -94,7 +95,21 @@ export function App({
       const bytesLogger = logBytesFile ? new SessionLogger(logBytesFile) : undefined;
       const textLogger = logTextFile ? new TextLogger(logTextFile) : undefined;
       textLoggerRef.current = textLogger;
-      const connection = new TelnetConnection(bytesLogger);
+
+      // Collect why-did-it-end facts for a diagnostic report. Print it on any
+      // process exit — a clean quit, a server drop, or a network error all
+      // funnel through here — so there's always meaningful output to hand a
+      // future Claude when debugging "I keep losing my connection".
+      const diagnostics = new SessionDiagnostics(profile.host, profile.port);
+      const printDiagnostics = () => {
+        // If nothing set a terminal reason, we're still connected and the
+        // process is exiting — that's a normal user quit (e.g. Ctrl+C).
+        diagnostics.end('user-quit');
+        diagnostics.printOnce();
+      };
+      process.on('exit', printDiagnostics);
+
+      const connection = new TelnetConnection(bytesLogger, diagnostics);
 
       connection.on('data', async (data: string) => {
         // Split by newlines and emit each line separately
@@ -153,6 +168,7 @@ export function App({
         });
 
       return () => {
+        process.removeListener('exit', printDiagnostics);
         connection.disconnect().catch(() => {});
       };
     }
@@ -361,14 +377,18 @@ export function App({
     };
   }, [scripts]);
 
-  // Auto-exit when connection is closed
-  const previousStatus = useRef(state.connection.status);
+  // Auto-exit when the connection is gone. Once we've been connected, reaching
+  // 'disconnected' means the session is over — whether it got there cleanly or
+  // by way of an 'error' first (a network drop is connected -> error ->
+  // disconnected). Exiting lets the process 'exit' hook print the diagnostics.
+  const hasConnected = useRef(false);
   useEffect(() => {
-    // Exit if we transition from 'connected' to 'disconnected'
-    if (previousStatus.current === 'connected' && state.connection.status === 'disconnected') {
+    if (state.connection.status === 'connected') {
+      hasConnected.current = true;
+    }
+    if (hasConnected.current && state.connection.status === 'disconnected') {
       process.exit(0);
     }
-    previousStatus.current = state.connection.status;
   }, [state.connection.status]);
 
   const handleSubmit = async (text: string) => {
