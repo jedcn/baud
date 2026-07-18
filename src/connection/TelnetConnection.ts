@@ -7,9 +7,6 @@ import { decodeCP437 } from '../utils/cp437.js';
 import { ConnectionManager } from './ConnectionManager.js';
 import { TelnetProtocol } from './TelnetProtocol.js';
 
-/** How often the OS should send TCP keepalive probes on an idle socket. */
-const KEEPALIVE_DELAY_MS = 30_000;
-
 export class TelnetConnection extends ConnectionManager {
   private client: Telnet;
   private connected = false;
@@ -87,10 +84,14 @@ export class TelnetConnection extends ConnectionManager {
       this.connected = true;
       this.diagnostics?.markConnected();
 
-      // Ask the OS to probe idle connections so a half-open socket (server
-      // crashed, dead network path, NAT/firewall eviction) eventually surfaces
-      // as a real 'error'/'close' instead of blocking on a read forever.
-      this.socket?.setKeepAlive(true, KEEPALIVE_DELAY_MS);
+      // Note: we deliberately do NOT enable TCP keepalive here. A 30s keepalive
+      // probe was tripping up legacy server TCP stacks (e.g. "MajorTCP/IP by
+      // Vircom" fronting a MajorBBS): ~30s after the last activity the server
+      // responded to the probe by closing the connection, so idle sessions died
+      // within a minute. A stock `telnet` sends no keepalive and stays
+      // connected indefinitely; matching that behaviour fixes the drops.
+      // Dead connections still surface via the server's own FIN or a socket
+      // error. See git history for the keepalive experiment that added this.
 
       this.emitStatus('connected');
     } catch (error) {
