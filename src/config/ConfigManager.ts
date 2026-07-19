@@ -77,6 +77,7 @@ export class ConfigManager {
       ui: {
         theme: 'default',
         showTimestamps: false,
+        palette: 'modern',
       },
     });
   }

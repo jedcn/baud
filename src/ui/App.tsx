@@ -1,7 +1,7 @@
 import { Box } from 'ink';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AliasManager } from '../aliases/AliasManager.js';
-import { ANSIParser } from '../connection/ANSIParser.js';
+import { ANSIParser, type PaletteName } from '../connection/ANSIParser.js';
 import { TelnetConnection } from '../connection/TelnetConnection.js';
 import { CommandHistoryManager } from '../history/CommandHistoryManager.js';
 import { HttpClient } from '../http/HttpClient.js';
@@ -29,6 +29,7 @@ interface AppProps {
   initialHistory?: string[];
   logBytesFile?: string;
   logTextFile?: string;
+  palette?: PaletteName;
 }
 
 export function App({
@@ -37,9 +38,10 @@ export function App({
   initialHistory = [],
   logBytesFile,
   logTextFile,
+  palette = 'modern',
 }: AppProps) {
   const { state, dispatch } = useAppState();
-  const ansiParser = useMemo(() => new ANSIParser(), []);
+  const ansiParser = useMemo(() => new ANSIParser(palette), [palette]);
   const [luaEngine, setLuaEngine] = useState<LuaEngine | null>(null);
   const connectionRef = useRef(state.connection.currentConnection);
   const statusFnRef = useRef<(() => any) | null>(null);

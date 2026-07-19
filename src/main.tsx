@@ -2,6 +2,7 @@
 import { render } from 'ink';
 import React from 'react';
 import { ConfigManager } from './config/ConfigManager.js';
+import type { PaletteName } from './connection/ANSIParser.js';
 import { CommandHistoryManager } from './history/CommandHistoryManager.js';
 import type { ConnectionProfile } from './state/AppState.js';
 import { StateProvider } from './state/StateContext.js';
@@ -12,9 +13,12 @@ async function parseArgs(): Promise<{
   scripts: string[];
   logBytesFile?: string;
   logTextFile?: string;
+  palette: PaletteName;
 }> {
   const args = process.argv.slice(2);
   const configManager = ConfigManager.getInstance();
+  const mainConfig = await configManager.loadMainConfig();
+  const palette = mainConfig.ui.palette;
 
   let host: string | undefined;
   let port: number | undefined;
@@ -84,7 +88,7 @@ Examples:
       console.error('Use --host and --port to connect directly, or check your profiles.');
       process.exit(1);
     }
-    return { profile, scripts, logBytesFile, logTextFile };
+    return { profile, scripts, logBytesFile, logTextFile, palette };
   }
 
   // Otherwise, require --host and --port
@@ -110,10 +114,10 @@ Examples:
     console.log(`Profile '${saveProfile}' saved successfully.`);
   }
 
-  return { profile, scripts, logBytesFile, logTextFile };
+  return { profile, scripts, logBytesFile, logTextFile, palette };
 }
 
-const { profile, scripts, logBytesFile, logTextFile } = await parseArgs();
+const { profile, scripts, logBytesFile, logTextFile, palette } = await parseArgs();
 const initialHistory = await CommandHistoryManager.getInstance().load();
 
 render(
@@ -124,6 +128,7 @@ render(
       initialHistory={initialHistory}
       logBytesFile={logBytesFile}
       logTextFile={logTextFile}
+      palette={palette}
     />
   </StateProvider>,
 );

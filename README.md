@@ -135,6 +135,27 @@ Configuration files are stored in platform-specific directories:
 - **Linux**: `~/.config/baud/`
 - **Windows**: `%APPDATA%/baud/`
 
+### Application Settings
+
+General settings live in `config.json`. The file is optional — if it's missing,
+baud uses the defaults below. Settings are read at startup, so restart baud after
+editing.
+
+```json
+{
+  "ui": {
+    "palette": "classic"
+  }
+}
+```
+
+- `ui.palette` (optional) — the ANSI color palette used to render output. One of:
+  - `"modern"` (default) — the standard xterm-256color palette.
+  - `"classic"` — the DOS/VGA text palette (channels 252/168/84) that classic
+    BBS door games such as Tele-Arena were authored for. Notably, code 33
+    ("yellow") renders as brown and bright colors are softer. See
+    <https://tele-arena.tumblr.com/ansi>.
+
 ### Connection Profiles
 
 Profiles are saved in `profiles.json` and can be created in two ways:
