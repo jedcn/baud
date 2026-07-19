@@ -36,6 +36,9 @@ export const MainConfigSchema = z.object({
     .object({
       theme: z.enum(['default', 'monokai', 'solarized']).default('default'),
       showTimestamps: z.boolean().default(false),
+      // ANSI color palette: 'modern' = xterm defaults; 'classic' = DOS/VGA
+      // palette Tele-Arena's colors were authored for (see ANSIParser).
+      palette: z.enum(['modern', 'classic']).default('modern'),
     })
     .default({}),
 });
