@@ -7,6 +7,7 @@ export function evaluateStatusFn(fn: () => any): StatusSegment[] {
       return result.map((s: any) => ({
         text: String(s.text ?? ''),
         fg: s.fg,
+        glue: s.glue ? true : undefined,
       }));
     }
     return [];

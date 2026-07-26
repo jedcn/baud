@@ -44,6 +44,15 @@ describe('evaluateStatusFn', () => {
     expect(segments).toEqual([]);
   });
 
+  it('passes the glue flag through', () => {
+    const fn = () => [{ text: '(184,893)' }, { text: '^', fg: 'red', glue: true }];
+
+    const segments = evaluateStatusFn(fn);
+
+    expect(segments[0]!.glue).toBeUndefined();
+    expect(segments[1]!.glue).toBe(true);
+  });
+
   it('coerces segment text to string', () => {
     const fn = () => [{ text: 42 }];
 
