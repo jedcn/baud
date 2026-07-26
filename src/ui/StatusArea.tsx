@@ -39,9 +39,12 @@ export function StatusArea() {
 
     for (let i = 0; i < segments.length; i++) {
       const seg = segments[i];
+      // Segments are normally space-separated, but one marked `glue` sits
+      // flush against its predecessor — so drop the trailing space here.
+      const gap = segments[i + 1]?.glue ? '' : ' ';
       elements.push(
         <Text key={`seg-${i}`} color={seg.fg ?? 'green'}>
-          {`${seg.text} `}
+          {`${seg.text}${gap}`}
         </Text>,
       );
     }

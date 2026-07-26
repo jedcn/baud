@@ -33,6 +33,10 @@ export interface ConnectionProfile {
 export interface StatusSegment {
   text: string;
   fg?: string;
+  // Render flush against the previous segment instead of after the usual
+  // space. Lets a script colour part of a value differently from the rest
+  // without breaking it apart visually, e.g. "(184,893)" + a red "^".
+  glue?: boolean;
 }
 
 export interface AppState {
