@@ -27,9 +27,12 @@ export function StatusArea() {
       case 'connecting':
         return `Connecting to ${profile?.host}:${profile?.port}...`;
       case 'error':
-        return `Error: ${error || 'Unknown error'}`;
+        // Naming the host makes a failed dial self-explanatory, the way
+        // `telnet: connect to address 1.2.3.4: Operation timed out` is.
+        return `Connection error (${profile?.host}:${profile?.port}): ${error || 'Unknown error'}`;
       default:
-        return 'Disconnected';
+        // A drop we can explain says why; a clean quit just says it's over.
+        return error ? `Disconnected: ${error}` : 'Disconnected';
     }
   };
 

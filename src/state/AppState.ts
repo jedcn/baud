@@ -55,6 +55,7 @@ export interface AppState {
 }
 
 export type AppAction =
+  | { type: 'CONNECTION_STARTED'; profile: ConnectionProfile }
   | { type: 'CONNECTION_STATUS_CHANGED'; status: ConnectionStatus; error?: string }
   | { type: 'CONNECTION_ESTABLISHED'; connection: ConnectionManager; profile: ConnectionProfile }
   | { type: 'CONNECTION_CLOSED' }
@@ -76,6 +77,18 @@ export const initialState: AppState = {
 
 export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
+    // Record the profile as soon as we start dialling, not just once we're in.
+    // Without this the status bar has nothing to name and reads
+    // "Connecting to undefined:undefined...".
+    case 'CONNECTION_STARTED':
+      return {
+        ...state,
+        connection: {
+          status: 'connecting',
+          profile: action.profile,
+        },
+      };
+
     case 'CONNECTION_STATUS_CHANGED':
       return {
         ...state,

@@ -102,6 +102,26 @@ describe('TelnetConnection diagnostics', () => {
     expect(diagnostics.report()).toContain('user-quit');
   });
 
+  test('a mid-session drop reports why it disconnected', async () => {
+    const { conn, client } = await makeConnectedConnection();
+    const statuses: Array<{ status: string; error?: string }> = [];
+    conn.on('status', (status: string, error?: string) => statuses.push({ status, error }));
+    client.emit('error', Object.assign(new Error('read ECONNRESET'), { code: 'ECONNRESET' }));
+    client.emit('close');
+    expect(statuses.at(-1)).toEqual({
+      status: 'disconnected',
+      error: 'Connection reset by peer',
+    });
+  });
+
+  test('a user-initiated disconnect needs no reason', async () => {
+    const { conn } = await makeConnectedConnection();
+    const statuses: Array<{ status: string; error?: string }> = [];
+    conn.on('status', (status: string, error?: string) => statuses.push({ status, error }));
+    await conn.disconnect();
+    expect(statuses.at(-1)).toEqual({ status: 'disconnected', error: undefined });
+  });
+
   test('inbound and outbound bytes are counted', async () => {
     const { conn, client, diagnostics } = await makeConnectedConnection();
     client.emit('data', Buffer.from('hello'));
@@ -125,6 +145,71 @@ describe('TelnetConnection diagnostics', () => {
     conn.on('data', (text: string) => received.push(text));
     client.emit('data', Buffer.from([0x68, 0x69, 255, 253, 3])); // "hi" + IAC DO SGA
     expect(received).toEqual(['hi']); // negotiation stripped, only "hi" shown
+  });
+});
+
+// Drive a connect attempt that never succeeds: the client rejects the way
+// telnet-client does on its connect timeout (a bare 'Cannot connect' string on
+// the 'error' event, then the destroyed socket's 'close').
+async function makeFailedConnection(failure: unknown) {
+  const client = new EventEmitter() as EventEmitter & {
+    connect: (opts: unknown) => Promise<void>;
+  };
+  client.connect = () => {
+    client.emit('error', failure);
+    // The socket is torn down straight after, which is what used to overwrite
+    // the failure reason with a bare "Disconnected".
+    queueMicrotask(() => client.emit('close'));
+    return Promise.reject(failure);
+  };
+
+  const diagnostics = new SessionDiagnostics('host.example.com', 4000);
+  const conn = new TelnetConnection(undefined, diagnostics);
+  const statuses: Array<{ status: string; error?: string }> = [];
+  conn.on('status', (status: string, error?: string) => statuses.push({ status, error }));
+  conn.on('error', () => {});
+  (conn as unknown as { client: unknown }).client = client;
+
+  const error = await conn
+    .connect({ id: 't', name: 't', protocol: 'telnet', host: 'host.example.com', port: 4000 })
+    .then(() => undefined)
+    .catch((e: Error) => e);
+  // Let the trailing 'close' land before anyone asserts.
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  return { conn, diagnostics, statuses, error };
+}
+
+describe('TelnetConnection failed connect', () => {
+  test('keeps the failure reason instead of falling back to disconnected', async () => {
+    const { statuses } = await makeFailedConnection('Cannot connect');
+    expect(statuses.map((s) => s.status)).toEqual(['connecting', 'error', 'error']);
+    expect(statuses.at(-1)?.error).toBe('Operation timed out');
+  });
+
+  test('never reports disconnected for a connection that never came up', async () => {
+    const { statuses } = await makeFailedConnection('Cannot connect');
+    expect(statuses.some((s) => s.status === 'disconnected')).toBe(false);
+  });
+
+  test('describes a refused connection', async () => {
+    const refused = Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' });
+    const { statuses } = await makeFailedConnection(refused);
+    expect(statuses.at(-1)?.error).toBe('Connection refused');
+  });
+
+  test('rejects with an Error even when telnet-client throws a string', async () => {
+    const { error } = await makeFailedConnection('Cannot connect');
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe('Cannot connect');
+  });
+
+  test('records the failure in the diagnostics report', async () => {
+    const { diagnostics } = await makeFailedConnection('Cannot connect');
+    const report = diagnostics.report();
+    expect(report).toContain('connect-failed');
+    expect(report).toContain('Connected:   never');
+    expect(report).toContain('Operation timed out');
   });
 });
 

@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AliasManager } from '../aliases/AliasManager.js';
 import { ANSIParser, type PaletteName } from '../connection/ANSIParser.js';
 import { TelnetConnection } from '../connection/TelnetConnection.js';
+import { describeConnectError } from '../connection/connectError.js';
 import { CommandHistoryManager } from '../history/CommandHistoryManager.js';
 import { HttpClient } from '../http/HttpClient.js';
 import { createLuaHttpApi } from '../http/luaHttp.js';
@@ -22,6 +23,9 @@ import { InputArea } from './InputArea.js';
 import { OutputArea } from './OutputArea.js';
 import { StatusArea } from './StatusArea.js';
 import { evaluateStatusFn } from './evaluateStatusFn.js';
+
+/** How long a failed connection stays on screen before the process gives up. */
+const FAILED_CONNECT_EXIT_DELAY_MS = 5000;
 
 interface AppProps {
   profile?: ConnectionProfile;
@@ -113,6 +117,10 @@ export function App({
 
       const connection = new TelnetConnection(bytesLogger, diagnostics);
 
+      // Publish the profile before dialling so the status bar can name the host
+      // it's connecting to (and, if it fails, the one that didn't answer).
+      dispatch({ type: 'CONNECTION_STARTED', profile });
+
       connection.on('data', async (data: string) => {
         // Split by newlines and emit each line separately
         const lines = data.split(/\r?\n/);
@@ -148,7 +156,7 @@ export function App({
         dispatch({
           type: 'CONNECTION_STATUS_CHANGED',
           status: 'error',
-          error: error.message,
+          error: describeConnectError(error),
         });
       });
 
@@ -165,7 +173,7 @@ export function App({
           dispatch({
             type: 'CONNECTION_STATUS_CHANGED',
             status: 'error',
-            error: error.message,
+            error: describeConnectError(error),
           });
         });
 
@@ -383,14 +391,37 @@ export function App({
   // 'disconnected' means the session is over — whether it got there cleanly or
   // by way of an 'error' first (a network drop is connected -> error ->
   // disconnected). Exiting lets the process 'exit' hook print the diagnostics.
+  //
+  // If we never connected at all there's nothing to sit in front of, so rather
+  // than parking in a dead TUI we report the failure like `telnet` does and
+  // exit non-zero. The delay leaves the reason readable in the status bar first.
   const hasConnected = useRef(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the exit decision follows the status; profile/error are read at the moment it changes
   useEffect(() => {
-    if (state.connection.status === 'connected') {
+    const { status, error } = state.connection;
+
+    if (status === 'connected') {
       hasConnected.current = true;
     }
-    if (hasConnected.current && state.connection.status === 'disconnected') {
-      process.exit(0);
+
+    if (hasConnected.current) {
+      if (status === 'disconnected') {
+        process.exit(0);
+      }
+      return;
     }
+
+    if (status !== 'error' || !profile) return;
+
+    const timer = setTimeout(() => {
+      const reason = error ?? 'Unknown error';
+      process.stderr.write(
+        `baud: connect to ${profile.host}:${profile.port}: ${reason}\nbaud: Unable to connect to remote host\n`,
+      );
+      process.exit(1);
+    }, FAILED_CONNECT_EXIT_DELAY_MS);
+
+    return () => clearTimeout(timer);
   }, [state.connection.status]);
 
   const handleSubmit = async (text: string) => {

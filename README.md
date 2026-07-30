@@ -121,6 +121,29 @@ distinguishes a dead connection from one that is merely quiet — a healthy
 server that simply has nothing to say (you're reading, idling at a menu, or
 away) is left alone.
 
+### Failed Connections
+
+When a server never answers — it's down, unreachable, or silently dropping
+your SYN — baud behaves like stock `telnet` rather than hanging around in a
+dead session. The status bar names the host and the reason:
+
+```
+Connection error (bbs.saturn5bbs.com:23): Operation timed out
+```
+
+That stays on screen for five seconds so you can read it, then baud prints the
+failure and the session diagnostics to stderr and exits with status 1:
+
+```
+baud: connect to bbs.saturn5bbs.com:23: Operation timed out
+baud: Unable to connect to remote host
+```
+
+Reasons are reported in plain language — `Operation timed out`, `Connection
+refused`, `Unknown host`, `No route to host` — instead of raw error codes. A
+connection that dies *after* it was established still exits immediately, and
+the status bar says why (e.g. `Disconnected: Connection reset by peer`).
+
 ### Help
 
 ```bash
