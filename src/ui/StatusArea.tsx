@@ -27,14 +27,20 @@ export function StatusArea() {
       case 'connecting':
         return `Connecting to ${profile?.host}:${profile?.port}...`;
       case 'error':
-        return `Error: ${error || 'Unknown error'}`;
+        // Naming the host makes a failed dial self-explanatory, the way
+        // `telnet: connect to address 1.2.3.4: Operation timed out` is.
+        return `Connection error (${profile?.host}:${profile?.port}): ${error || 'Unknown error'}`;
       default:
-        return 'Disconnected';
+        // A drop we can explain says why; a clean quit just says it's over.
+        return error ? `Disconnected: ${error}` : 'Disconnected';
     }
   };
 
-  // If custom segments are set via Lua, render those
-  if (segments.length > 0) {
+  // Custom Lua segments own the status bar, but only while there's a live
+  // session for them to describe. A script that calls setStatus() at load time
+  // would otherwise paint over "Connecting to ..." and, worse, over the reason
+  // a connection failed — leaving a dead client showing a stale HP gauge.
+  if (segments.length > 0 && status === 'connected') {
     const elements: ReactNode[] = [];
 
     for (let i = 0; i < segments.length; i++) {

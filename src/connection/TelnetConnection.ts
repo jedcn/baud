@@ -6,6 +6,7 @@ import type { ConnectionProfile } from '../state/AppState.js';
 import { decodeCP437 } from '../utils/cp437.js';
 import { ConnectionManager } from './ConnectionManager.js';
 import { TelnetProtocol } from './TelnetProtocol.js';
+import { describeConnectError, toError } from './connectError.js';
 
 export class TelnetConnection extends ConnectionManager {
   private client: Telnet;
@@ -18,6 +19,11 @@ export class TelnetConnection extends ConnectionManager {
   private userInitiated = false;
   /** Whether a socket error fired during this connection's life. */
   private sawError = false;
+  /** Whether the socket ever finished connecting, which decides whether a
+   * 'close' means "the session ended" or "the attempt failed". */
+  private everConnected = false;
+  /** Human-readable text for the most recent error, shown in the status bar. */
+  private lastErrorText?: string;
 
   constructor(logger?: SessionLogger, diagnostics?: SessionDiagnostics) {
     super();
@@ -54,6 +60,13 @@ export class TelnetConnection extends ConnectionManager {
 
       this.client.on('close', () => {
         this.connected = false;
+        // A close before we ever connected is just the tail end of a failed
+        // attempt (telnet-client destroys the socket after its connect timeout).
+        // Staying on 'error' keeps the reason on screen instead of replacing it
+        // with a bare "Disconnected"; connect()'s catch owns the diagnostics.
+        if (!this.everConnected) {
+          return;
+        }
         // Classify why the socket closed for the end-of-session diagnostics:
         // a close we asked for is a normal quit; a close preceded by an error
         // is a network drop; anything else is the server hanging up cleanly.
@@ -63,13 +76,22 @@ export class TelnetConnection extends ConnectionManager {
             ? 'network-error'
             : 'server-closed';
         this.diagnostics?.end(reason);
-        this.emitStatus('disconnected');
+        this.emitStatus(
+          'disconnected',
+          this.userInitiated
+            ? undefined
+            : (this.lastErrorText ?? 'Connection closed by remote host'),
+        );
       });
 
-      this.client.on('error', (error: Error) => {
+      this.client.on('error', (rawError: unknown) => {
+        // telnet-client emits a bare string ('Cannot connect') for its own
+        // connect timeout, so normalise before touching .message.
+        const error = toError(rawError);
         this.sawError = true;
+        this.lastErrorText = describeConnectError(rawError);
         this.diagnostics?.recordError(error.message);
-        this.emitStatus('error', error.message);
+        this.emitStatus('error', this.lastErrorText);
         this.emitError(error);
       });
 
@@ -82,6 +104,7 @@ export class TelnetConnection extends ConnectionManager {
       });
 
       this.connected = true;
+      this.everConnected = true;
       this.diagnostics?.markConnected();
 
       // Note: we deliberately do NOT enable TCP keepalive here. A 30s keepalive
@@ -96,11 +119,12 @@ export class TelnetConnection extends ConnectionManager {
       this.emitStatus('connected');
     } catch (error) {
       this.connected = false;
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.diagnostics?.recordError(errorMessage);
-      this.diagnostics?.end('connect-failed', errorMessage);
-      this.emitStatus('error', errorMessage);
-      throw error;
+      const description = describeConnectError(error);
+      this.lastErrorText = description;
+      this.diagnostics?.recordError(toError(error).message);
+      this.diagnostics?.end('connect-failed', description);
+      this.emitStatus('error', description);
+      throw toError(error);
     }
   }
 
