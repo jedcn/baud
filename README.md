@@ -114,12 +114,17 @@ dies, or a firewall/NAT silently evicts the flow — your machine may never
 receive a TCP FIN or RST. Without one, baud would sit in `connected` state
 forever, waiting on bytes that never arrive.
 
-baud guards against this with **TCP keepalive**, which is enabled on every
-connection: the OS probes idle sockets, and a genuinely dead one eventually
-surfaces as a normal disconnect through the usual `close`/`error` path. This
-distinguishes a dead connection from one that is merely quiet — a healthy
-server that simply has nothing to say (you're reading, idling at a menu, or
-away) is left alone.
+baud used to guard against this with **TCP keepalive**, but it now deliberately
+sends no keepalive probes at all, because legacy server TCP stacks answered
+them by hanging up: a MajorBBS behind "MajorTCP/IP by Vircom" closed the
+connection roughly 30s after the last activity, so idle sessions died within a
+minute. A stock `telnet` sends no keepalive and stays connected indefinitely;
+matching that behaviour is what keeps long, quiet sessions alive.
+
+In practice a dead connection still surfaces on its own — the server's FIN or a
+socket error comes through the usual `close`/`error` path, and baud exits with
+the reason. What isn't detected automatically is a *silently* half-open socket:
+it stays in `connected` state until you send something and the write fails.
 
 ### Failed Connections
 
