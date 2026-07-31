@@ -9,9 +9,12 @@ import { StatusArea } from '../src/ui/StatusArea.js';
 
 // Pushes segments into the shared state so StatusArea renders them, since
 // StateProvider always starts from the default (empty) state.
+// Lua segments only take over the status bar on a live connection, so seed one
+// alongside them.
 function SeedSegments({ segments }: { segments: StatusSegment[] }) {
   const { dispatch } = useAppState();
   React.useEffect(() => {
+    dispatch({ type: 'CONNECTION_STATUS_CHANGED', status: 'connected' });
     dispatch({ type: 'SET_STATUS_SEGMENTS', segments });
   }, []);
   return null;
@@ -112,6 +115,60 @@ describe('UI components render without errors', () => {
     expect(lastFrame()).toContain(
       'Connection error (bbs.saturn5bbs.com:23): Operation timed out'
     );
+  });
+
+  it('StatusArea shows the connection attempt over a script status bar', async () => {
+    // A --script that calls setStatus() at load time used to hide the fact that
+    // the connection was still dialling — or had failed outright.
+    const { lastFrame } = render(
+      <StateProvider>
+        <SeedConnection
+          actions={[
+            { type: 'CONNECTION_STARTED', profile: testProfile },
+            { type: 'SET_STATUS_SEGMENTS', segments: [{ text: 'HP: 100/100', fg: 'green' }] },
+          ]}
+        />
+        <StatusArea />
+      </StateProvider>
+    );
+    await tick();
+    expect(lastFrame()).toContain('Connecting to bbs.saturn5bbs.com:23...');
+    expect(lastFrame()).not.toContain('HP: 100/100');
+  });
+
+  it('StatusArea shows a failure over a script status bar', async () => {
+    const { lastFrame } = render(
+      <StateProvider>
+        <SeedConnection
+          actions={[
+            { type: 'CONNECTION_STARTED', profile: testProfile },
+            { type: 'SET_STATUS_SEGMENTS', segments: [{ text: 'HP: 100/100', fg: 'green' }] },
+            { type: 'CONNECTION_STATUS_CHANGED', status: 'error', error: 'Operation timed out' },
+          ]}
+        />
+        <StatusArea />
+      </StateProvider>
+    );
+    await tick();
+    expect(lastFrame()).toContain('Operation timed out');
+    expect(lastFrame()).not.toContain('HP: 100/100');
+  });
+
+  it('StatusArea hands the bar back to a script once connected', async () => {
+    const { lastFrame } = render(
+      <StateProvider>
+        <SeedConnection
+          actions={[
+            { type: 'CONNECTION_STARTED', profile: testProfile },
+            { type: 'SET_STATUS_SEGMENTS', segments: [{ text: 'HP: 100/100', fg: 'green' }] },
+            { type: 'CONNECTION_STATUS_CHANGED', status: 'connected' },
+          ]}
+        />
+        <StatusArea />
+      </StateProvider>
+    );
+    await tick();
+    expect(lastFrame()).toContain('HP: 100/100');
   });
 
   it('StatusArea reports why a live connection dropped', async () => {

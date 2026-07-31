@@ -36,8 +36,11 @@ export function StatusArea() {
     }
   };
 
-  // If custom segments are set via Lua, render those
-  if (segments.length > 0) {
+  // Custom Lua segments own the status bar, but only while there's a live
+  // session for them to describe. A script that calls setStatus() at load time
+  // would otherwise paint over "Connecting to ..." and, worse, over the reason
+  // a connection failed — leaving a dead client showing a stale HP gauge.
+  if (segments.length > 0 && status === 'connected') {
     const elements: ReactNode[] = [];
 
     for (let i = 0; i < segments.length; i++) {

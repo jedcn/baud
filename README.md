@@ -149,6 +149,10 @@ refused`, `Unknown host`, `No route to host` — instead of raw error codes. A
 connection that dies *after* it was established still exits immediately, and
 the status bar says why (e.g. `Disconnected: Connection reset by peer`).
 
+A `--script` that builds its own status bar with `setStatus()` only owns that
+bar while you're connected. Off a live session the connection status wins, so a
+script loaded at startup can't paint over the attempt or hide its failure.
+
 ### Help
 
 ```bash
