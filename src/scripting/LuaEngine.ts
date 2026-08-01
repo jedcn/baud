@@ -108,6 +108,13 @@ export class LuaEngine {
     this.engine.global.set('send', this.api.send);
     this.engine.global.set('echo', this.api.echo);
 
+    // Wall-clock milliseconds. Lua offers only whole seconds (os.time,
+    // os.date), which is too coarse for a script to reason about its own
+    // pacing -- measuring the gap between paced moves, say, where the interval
+    // under study is itself around a second. os.clock is no substitute: it
+    // reports CPU time consumed, not time elapsed.
+    this.engine.global.set('nowMs', () => Date.now());
+
     // Override dofile to read from the real filesystem. The file's chunk is
     // loaded and run *in Lua* (via load()()), NOT through doStringSync: the
     // latter marshals the module's return value through JS, so a returned table
