@@ -37,6 +37,10 @@ export interface StatusSegment {
   // space. Lets a script colour part of a value differently from the rest
   // without breaking it apart visually, e.g. "(184,893)" + a red "^".
   glue?: boolean;
+  // Render bold. Colour alone is easy to miss on a bar that is already
+  // colourful; bold is what makes a transient segment — an XP delta that
+  // shows for a few seconds, say — read as "this just changed".
+  bold?: boolean;
 }
 
 export interface AppState {

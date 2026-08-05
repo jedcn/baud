@@ -8,6 +8,7 @@ export function evaluateStatusFn(fn: () => any): StatusSegment[] {
         text: String(s.text ?? ''),
         fg: s.fg,
         glue: s.glue ? true : undefined,
+        bold: s.bold ? true : undefined,
       }));
     }
     return [];
