@@ -283,6 +283,8 @@ export function App({
             const segments: StatusSegment[] = segmentsOrFunction.map((s: any) => ({
               text: String(s.text ?? ''),
               fg: s.fg,
+              glue: s.glue ? true : undefined,
+              bold: s.bold ? true : undefined,
             }));
             dispatch({ type: 'SET_STATUS_SEGMENTS', segments });
           } else {
