@@ -115,6 +115,26 @@ export class LuaEngine {
     // reports CPU time consumed, not time elapsed.
     this.engine.global.set('nowMs', () => Date.now());
 
+    // Host environment variables. Lua's own os.getenv is useless here: wasmoon
+    // runs Lua as WASM, so os.getenv reads emscripten's sandbox environment
+    // (PATH comes back as "/") rather than the process baud was launched with.
+    // A script that wants to know which character to log in as, or which
+    // machine it is running on, has no other way to be told at startup.
+    //
+    // Two marshalling hazards, hence the shape below. JS null becomes a
+    // *truthy* Lua userdata (see createDbApi above), so an unset variable must
+    // come back as undefined -- but undefined pushes *zero* return values
+    // rather than nil, which makes `tostring(getenv("X"))` fail outright with
+    // "value expected" for an unset X. The Lua wrapper's explicit `return v`
+    // normalizes that to exactly one value, so getenv reads as nil everywhere.
+    this.engine.global.set('__getenv', (name: string) => process.env[name] ?? undefined);
+    this.engine.doStringSync(`
+      function getenv(name)
+        local v = __getenv(name)
+        return v
+      end
+    `);
+
     // Override dofile to read from the real filesystem. The file's chunk is
     // loaded and run *in Lua* (via load()()), NOT through doStringSync: the
     // latter marshals the module's return value through JS, so a returned table
