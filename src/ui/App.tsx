@@ -199,6 +199,12 @@ export function App({
         send: (text: string) => {
           // Process outbound triggers before sending
           outboundTriggerManager.processCommand(text, handleLuaError);
+          // Log it the same way typed input is logged. Without this a session
+          // log holds only what the user typed and what the server said, so a
+          // script's own traffic has to be inferred from the server's echoes
+          // of it -- and a script that sends the *wrong* thing leaves no
+          // direct evidence at all.
+          textLoggerRef.current?.logSend(text);
           if (connectionRef.current) {
             connectionRef.current.send(text);
           }
