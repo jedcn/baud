@@ -49,7 +49,7 @@ export function StatusArea() {
       // flush against its predecessor — so drop the trailing space here.
       const gap = segments[i + 1]?.glue ? '' : ' ';
       elements.push(
-        <Text key={`seg-${i}`} color={seg.fg ?? 'green'}>
+        <Text key={`seg-${i}`} color={seg.fg ?? 'green'} bold={seg.bold}>
           {`${seg.text}${gap}`}
         </Text>,
       );
