@@ -61,6 +61,7 @@ export interface SoundInfo {
 
 export interface LuaAPI {
   send: (text: string) => void;
+  runCommand: (text: string) => void;
   echo: (text: string) => void;
   cecho: (color: string, text: string) => void;
   cechoBg: (color: string, backgroundColor: string, text: string, bold?: boolean) => void;
@@ -106,6 +107,15 @@ export class LuaEngine {
 
     // Register global functions (without namespace)
     this.engine.global.set('send', this.api.send);
+
+    // send() writes to the socket and nothing else, so a script cannot reach
+    // its own aliases with it: "rg 2" would arrive at the server as the literal
+    // text rather than running the alias's callback. runCommand takes the path
+    // typed input takes -- aliases first, then outbound triggers and the wire --
+    // so a script can drive the client the way the user does. It answers a
+    // concrete need: running a command for the user on login, named by an
+    // environment variable, where that command is usually an alias.
+    this.engine.global.set('runCommand', this.api.runCommand);
     this.engine.global.set('echo', this.api.echo);
 
     // Wall-clock milliseconds. Lua offers only whole seconds (os.time,
