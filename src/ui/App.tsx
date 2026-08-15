@@ -49,6 +49,11 @@ export function App({
   const [luaEngine, setLuaEngine] = useState<LuaEngine | null>(null);
   const connectionRef = useRef(state.connection.currentConnection);
   const statusFnRef = useRef<(() => any) | null>(null);
+  // handleSubmit is redefined on every render, but the Lua engine is built once
+  // and holds whatever it was handed forever. The ref is the indirection that
+  // lets runCommand call the *current* handleSubmit rather than the one that
+  // existed when the engine was created.
+  const submitRef = useRef<((text: string) => Promise<void>) | null>(null);
   const textLoggerRef = useRef<TextLogger | undefined>(undefined);
   const triggerManager = useMemo(() => new TriggerManager(), []);
   const outboundTriggerManager = useMemo(() => new OutboundTriggerManager(), []);
@@ -208,6 +213,16 @@ export function App({
           if (connectionRef.current) {
             connectionRef.current.send(text);
           }
+        },
+        // Everything typed input goes through: alias matching, && chaining,
+        // outbound triggers, logging, the wire. Handing the whole line to
+        // handleSubmit rather than re-deriving that path here is what keeps a
+        // scripted command and a typed one identical -- including the parts a
+        // reimplementation would quietly drop, like the echo of a matched
+        // alias. Nothing reads a result, so the promise is deliberately
+        // dropped: Lua (wasmoon) cannot await one anyway.
+        runCommand: (text: string) => {
+          void submitRef.current?.(text);
         },
         echo: (text: string) => {
           textLoggerRef.current?.logRecv(text);
@@ -502,6 +517,9 @@ export function App({
       state.connection.currentConnection.send(text);
     }
   };
+
+  // Keep the Lua-visible runCommand pointed at this render's handleSubmit.
+  submitRef.current = handleSubmit;
 
   // Write the physical screen clear after React has re-rendered with the new generation,
   // so <Static> has already remounted before Ink's cursor tracking is affected.
