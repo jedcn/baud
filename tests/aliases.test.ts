@@ -283,3 +283,29 @@ describe('Aliases', () => {
     expect(aliases[0].enabled).toBe(false);
   });
 });
+
+// The alias callback usually sends to the server, so anything logging the alias
+// AFTER processInput resolves records it below the traffic it caused. A session
+// log is worth most for its order, so onMatch fires first.
+describe('processInput onMatch ordering', () => {
+  test('fires onMatch before the alias callback runs', async () => {
+    const manager = new AliasManager();
+    const order: string[] = [];
+    manager.createAlias('nw', () => {
+      order.push('callback');
+    });
+    await manager.processInput('nw', undefined, () => order.push('onMatch'));
+    expect(order).toEqual(['onMatch', 'callback']);
+  });
+
+  test('does not fire onMatch when nothing matches', async () => {
+    const manager = new AliasManager();
+    let fired = false;
+    manager.createAlias('nw', () => {});
+    const matched = await manager.processInput('look', undefined, () => {
+      fired = true;
+    });
+    expect(matched).toBe(false);
+    expect(fired).toBe(false);
+  });
+});

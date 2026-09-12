@@ -55,13 +55,24 @@ export class AliasManager {
   /**
    * Process user input through all aliases
    * @param text - User input to process
+   * @param onError - Called if the alias callback throws
+   * @param onMatch - Called once a match is found, BEFORE the callback runs
    * @returns True if an alias matched and was executed (input should be consumed)
    */
-  async processInput(text: string, onError?: (error: Error) => void): Promise<boolean> {
+  async processInput(
+    text: string,
+    onError?: (error: Error) => void,
+    onMatch?: () => void,
+  ): Promise<boolean> {
     for (const alias of this.aliases) {
       const result = alias.match(text);
 
       if (result.matched) {
+        // Before the callback, not after. The callback usually sends to the
+        // server -- every movement alias does -- so a caller that logs the alias
+        // once processInput returns records it BELOW the traffic it caused.
+        // Ordering is most of what a log is worth to anyone replaying a session.
+        onMatch?.();
         // Execute the alias callback with error handling
         await alias.execute(result.captures || [], onError);
         return true; // Input was consumed by alias

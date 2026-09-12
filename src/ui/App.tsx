@@ -497,15 +497,16 @@ export function App({
     }
 
     // Process aliases with error handling
-    const aliasMatched = await aliasManager.processInput(text, handleLuaError);
+    // Logged from onMatch, which fires before the alias callback runs, so the
+    // log reads in the order the session happened: the alias line, then whatever
+    // that alias sent, then the server's reply. Logging after processInput
+    // returns puts the alias below its own traffic, since the callback has
+    // already sent by then. Logged even though nothing reaches the wire -- an
+    // alias is the one command a log used to lose entirely.
+    const aliasMatched = await aliasManager.processInput(text, handleLuaError, () => {
+      textLoggerRef.current?.logAlias(text);
+    });
     if (aliasMatched) {
-      // Log the alias before echoing it, so the log keeps the order the session
-      // had: the alias line, then whatever the alias sent and the server said
-      // back. Logged even though nothing reaches the wire -- an alias is the one
-      // command a log used to lose entirely.
-      if (textLoggerRef.current) {
-        textLoggerRef.current.logAlias(text);
-      }
       // Echo the alias input so user sees what they typed
       dispatch({
         type: 'OUTPUT_LINE_RECEIVED',
