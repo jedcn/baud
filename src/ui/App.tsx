@@ -499,6 +499,13 @@ export function App({
     // Process aliases with error handling
     const aliasMatched = await aliasManager.processInput(text, handleLuaError);
     if (aliasMatched) {
+      // Log the alias before echoing it, so the log keeps the order the session
+      // had: the alias line, then whatever the alias sent and the server said
+      // back. Logged even though nothing reaches the wire -- an alias is the one
+      // command a log used to lose entirely.
+      if (textLoggerRef.current) {
+        textLoggerRef.current.logAlias(text);
+      }
       // Echo the alias input so user sees what they typed
       dispatch({
         type: 'OUTPUT_LINE_RECEIVED',

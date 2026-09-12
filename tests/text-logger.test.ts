@@ -37,6 +37,43 @@ describe('TextLogger', () => {
     cleanup();
   });
 
+  // An alias never reaches the server, so it gets no `> ` line, and a log of a
+  // scripted session could not say which aliases ran or when. Replaying one
+  // meant guessing. `$ ` records it without claiming it was sent.
+  test('logAlias appends text with $ prefix', () => {
+    cleanup();
+    const logger = new TextLogger(testLogPath);
+    logger.logAlias('map-area caves The Caves');
+    const content = readFileSync(testLogPath, 'utf-8');
+    expect(content).toContain('$ map-area caves The Caves\n');
+    cleanup();
+  });
+
+  test('logAlias does not use the > prefix that means sent-to-server', () => {
+    cleanup();
+    const logger = new TextLogger(testLogPath);
+    logger.logAlias('map-off');
+    const content = readFileSync(testLogPath, 'utf-8');
+    expect(content).not.toContain('> map-off');
+    cleanup();
+  });
+
+  test('keeps aliases, sends and server output in one ordered stream', () => {
+    cleanup();
+    const logger = new TextLogger(testLogPath);
+    logger.logAlias('map-area caves');
+    logger.logSend('ex');
+    logger.logRecv('Exits: n,s.');
+    const content = readFileSync(testLogPath, 'utf-8');
+    const aliasAt = content.indexOf('$ map-area caves');
+    const sendAt = content.indexOf('> ex');
+    const recvAt = content.indexOf('Exits: n,s.');
+    expect(aliasAt).toBeGreaterThan(-1);
+    expect(sendAt).toBeGreaterThan(aliasAt);
+    expect(recvAt).toBeGreaterThan(sendAt);
+    cleanup();
+  });
+
   test('logRecv does not add > prefix', () => {
     cleanup();
     const logger = new TextLogger(testLogPath);
