@@ -229,10 +229,20 @@ export function App({
           const segments = [{ text }];
           dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: text, segments });
         },
+        // Logged like echo: the colour is how a line is DISPLAYED, not what it
+        // is, and a script that colours its most important line should not
+        // thereby lose it. The tele-arena script had been avoiding cecho for
+        // exactly this reason -- a death, an armed stop, "did this fire?" -- all
+        // written in plain echo with a comment explaining that cecho never
+        // reaches the log.
         cecho: (color: string, text: string) => {
+          textLoggerRef.current?.logRecv(text);
           const segments = [{ text, color }];
           dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: text, segments });
         },
+        // cechoBg deliberately does NOT log. Its one caller is a per-hit combat
+        // badge whose text restates a line the log already has, so logging it
+        // would double every blow struck in a fight.
         cechoBg: (color: string, backgroundColor: string, text: string, bold?: boolean) => {
           const segments = [{ text, color, backgroundColor, bold }];
           dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: text, segments });
@@ -497,7 +507,15 @@ export function App({
     }
 
     // Process aliases with error handling
-    const aliasMatched = await aliasManager.processInput(text, handleLuaError);
+    // Logged from onMatch, which fires before the alias callback runs, so the
+    // log reads in the order the session happened: the alias line, then whatever
+    // that alias sent, then the server's reply. Logging after processInput
+    // returns puts the alias below its own traffic, since the callback has
+    // already sent by then. Logged even though nothing reaches the wire -- an
+    // alias is the one command a log used to lose entirely.
+    const aliasMatched = await aliasManager.processInput(text, handleLuaError, () => {
+      textLoggerRef.current?.logAlias(text);
+    });
     if (aliasMatched) {
       // Echo the alias input so user sees what they typed
       dispatch({
