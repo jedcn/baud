@@ -23,6 +23,7 @@ import { InputArea } from './InputArea.js';
 import { OutputArea } from './OutputArea.js';
 import { StatusArea } from './StatusArea.js';
 import { evaluateStatusFn } from './evaluateStatusFn.js';
+import { processIncomingData } from './processIncomingData.js';
 
 /** How long a failed connection stays on screen before the process gives up. */
 const FAILED_CONNECT_EXIT_DELAY_MS = 5000;
@@ -127,23 +128,13 @@ export function App({
       dispatch({ type: 'CONNECTION_STARTED', profile });
 
       connection.on('data', async (data: string) => {
-        // Split by newlines and emit each line separately
-        const lines = data.split(/\r?\n/);
-        const nonEmptyLines = lines.filter((l) => l.trim().length > 0);
-        for (let i = 0; i < nonEmptyLines.length; i++) {
-          const line = nonEmptyLines[i];
-          const segments = ansiParser.parse(line);
-          const plainText = ansiParser.strip(line);
-          if (textLogger) {
-            textLogger.logRecv(plainText);
-          }
-
-          // Process triggers with error handling and context
-          const context = { isLastLine: i === nonEmptyLines.length - 1 };
-          await triggerManager.processLine(plainText, handleLuaError, context);
-
-          dispatch({ type: 'OUTPUT_LINE_RECEIVED', line: plainText, segments });
-        }
+        await processIncomingData(data, {
+          ansiParser,
+          triggerManager,
+          textLogger,
+          display: (line, segments) => dispatch({ type: 'OUTPUT_LINE_RECEIVED', line, segments }),
+          onError: handleLuaError,
+        });
 
         // Re-evaluate status bar after processing server data
         evaluateStatus();
