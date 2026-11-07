@@ -111,4 +111,34 @@ describe('TextLogger', () => {
     expect(content).toBeDefined();
     cleanup();
   });
+
+  // Logs had almost no clock, so fights could only be timed by counting polls.
+  test('stamps the first entry of each second, and only the first', () => {
+    cleanup();
+    const realDate = globalThis.Date;
+    let clock = '2026-11-07T08:12:58';
+    globalThis.Date = class extends realDate {
+      constructor() {
+        super(clock);
+      }
+    } as DateConstructor;
+    try {
+      const logger = new TextLogger(testLogPath);
+      logger.logRecv('one');
+      logger.logSend('two');
+      clock = '2026-11-07T08:12:59';
+      logger.logAlias('three');
+      const lines = readFileSync(testLogPath, 'utf-8').split('\n').slice(2, -1);
+      expect(lines).toEqual([
+        '[T] 08:12:58 tick',
+        'one',
+        '> two',
+        '[T] 08:12:59 tick',
+        '$ three',
+      ]);
+    } finally {
+      globalThis.Date = realDate;
+      cleanup();
+    }
+  });
 });
