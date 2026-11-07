@@ -4,9 +4,16 @@ export class TextLogger {
   private filePath: string;
   private lastStamp = '';
 
-  constructor(filePath: string) {
+  // The header names baud's version, when it is known, after the start time:
+  // "# baud text log - started <iso> - baud 9d763ba". Readers take the first
+  // word after "started" as the time, so the version doesn't disturb them.
+  constructor(filePath: string, baudVersion?: string) {
     this.filePath = filePath;
-    writeFileSync(this.filePath, `# baud text log - started ${new Date().toISOString()}\n\n`);
+    const version = baudVersion ? ` - baud ${baudVersion}` : '';
+    writeFileSync(
+      this.filePath,
+      `# baud text log - started ${new Date().toISOString()}${version}\n\n`,
+    );
   }
 
   logRecv(text: string): void {

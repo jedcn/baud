@@ -1,33 +1,10 @@
 import { Database } from 'bun:sqlite';
-import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { LuaFactory, type LuaEngine as WasmoonEngine } from 'wasmoon';
+import { gitVersion } from '../version.js';
 
 export type LuaCallback = (...args: any[]) => void | Promise<void>;
-
-/**
- * The commit a directory's git checkout is at: the short SHA, with "-dirty"
- * when tracked files have uncommitted changes. Untracked files don't count, so
- * a stray scratch file doesn't mark a clean checkout dirty. Undefined when the
- * directory isn't in a git checkout or git can't be run.
- */
-export function gitVersion(dir: string): string | undefined {
-  const git = (args: string[]) =>
-    execFileSync('git', ['-C', dir, ...args], {
-      encoding: 'utf-8',
-      timeout: 2000,
-      stdio: ['ignore', 'pipe', 'ignore'],
-    }).trim();
-  try {
-    const sha = git(['rev-parse', '--short', 'HEAD']);
-    if (!sha) return undefined;
-    const dirty = git(['status', '--porcelain', '--untracked-files=no']) !== '';
-    return dirty ? `${sha}-dirty` : sha;
-  } catch {
-    return undefined;
-  }
-}
 
 /**
  * The SQLite handle exposed to Lua scripts by `dbOpen`.

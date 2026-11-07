@@ -83,10 +83,10 @@ baud can log your session to a file in two formats.
 bun run src/main.tsx --profile myserver --log-text ./session.txt
 ```
 
-The resulting file looks like:
+The resulting file looks like this. The header names the commit baud was started from (`-dirty` with uncommitted changes, `unknown` outside a git checkout):
 
 ```
-# baud text log - started 2026-03-14T12:00:00.000Z
+# baud text log - started 2026-03-14T12:00:00.000Z - baud 9d763ba
 
 Welcome to the realm, adventurer!
 You are standing in a dimly lit tavern.

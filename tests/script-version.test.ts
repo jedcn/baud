@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { LuaEngine } from '../src/scripting/LuaEngine';
+import { BAUD_VERSION } from '../src/version';
 
 // scriptVersion exists so a script can write the commit it was loaded from into
 // the session log. Wasmoon's Lua can neither read .git nor run git itself.
@@ -94,5 +95,16 @@ describe('scriptVersion', () => {
     const file = path.join(repo, 'main.lua');
     await luaEngine.loadFile('echo(tostring(scriptVersion()))', file);
     expect(echoed).toEqual([git('rev-parse', '--short', 'HEAD')]);
+  });
+});
+
+// BAUD_VERSION is read once, as baud starts, for the log header.
+describe('BAUD_VERSION', () => {
+  test("is the commit of baud's own checkout", () => {
+    const here = path.dirname(new URL(import.meta.url).pathname);
+    const sha = execFileSync('git', ['-C', here, 'rev-parse', '--short', 'HEAD'], {
+      encoding: 'utf-8',
+    }).trim();
+    expect(BAUD_VERSION?.replace(/-dirty$/, '')).toBe(sha);
   });
 });

@@ -19,6 +19,24 @@ describe('TextLogger', () => {
     cleanup();
   });
 
+  test('names baud\'s version in the header, after the start time', () => {
+    cleanup();
+    new TextLogger(testLogPath, '9d763ba');
+    const header = readFileSync(testLogPath, 'utf-8').split('\n')[0];
+    expect(header).toMatch(/^# baud text log - started \S+Z - baud 9d763ba$/);
+    // What the scripts' log reader takes as the start time: the next word only.
+    expect(header.match(/^# baud text log - started (\S+)/)?.[1]).toEndWith('Z');
+    cleanup();
+  });
+
+  test('leaves the version out of the header when none is given', () => {
+    cleanup();
+    new TextLogger(testLogPath);
+    const header = readFileSync(testLogPath, 'utf-8').split('\n')[0];
+    expect(header).toMatch(/^# baud text log - started \S+Z$/);
+    cleanup();
+  });
+
   test('logRecv appends plain text with newline', () => {
     cleanup();
     const logger = new TextLogger(testLogPath);
