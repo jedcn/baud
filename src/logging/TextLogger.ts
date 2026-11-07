@@ -2,6 +2,7 @@ import { appendFileSync, writeFileSync } from 'node:fs';
 
 export class TextLogger {
   private filePath: string;
+  private lastStamp = '';
 
   constructor(filePath: string) {
     this.filePath = filePath;
@@ -9,11 +10,11 @@ export class TextLogger {
   }
 
   logRecv(text: string): void {
-    appendFileSync(this.filePath, `${text}\n`);
+    this.write(`${text}\n`);
   }
 
   logSend(text: string): void {
-    appendFileSync(this.filePath, `> ${text}\n`);
+    this.write(`> ${text}\n`);
   }
 
   // A command an alias consumed, so it never reached the server and never got a
@@ -25,6 +26,20 @@ export class TextLogger {
   // and an alias is precisely the case where it did not -- anything reading the
   // log back needs to tell the two apart.
   logAlias(text: string): void {
-    appendFileSync(this.filePath, `$ ${text}\n`);
+    this.write(`$ ${text}\n`);
+  }
+
+  // A clock line ahead of the first entry of each second, so anything reading the
+  // log back can time what happened without the script having to print the time.
+  // Local time, like the game's own status bar. Only in the file: it never reaches
+  // the screen or a trigger.
+  private write(entry: string): void {
+    const stamp = new Date().toTimeString().slice(0, 8);
+    if (stamp === this.lastStamp) {
+      appendFileSync(this.filePath, entry);
+    } else {
+      this.lastStamp = stamp;
+      appendFileSync(this.filePath, `[T] ${stamp} tick\n${entry}`);
+    }
   }
 }

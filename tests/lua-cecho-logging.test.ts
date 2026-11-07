@@ -69,7 +69,7 @@ describe('a coloured echo reaches the text log', () => {
 
     const lines = readFileSync(logPath, 'utf-8')
       .split('\n')
-      .filter((l) => l.length && !l.startsWith('#'));   // drop the log's own header
+      .filter((l) => l.length && !l.startsWith('#') && !l.startsWith('[T] '));   // drop the log's header and clock lines
     expect(lines).toEqual(['minting a room that may exist', '  map-here it']);
   });
 });
