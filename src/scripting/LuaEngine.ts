@@ -1,9 +1,33 @@
 import { Database } from 'bun:sqlite';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { LuaFactory, type LuaEngine as WasmoonEngine } from 'wasmoon';
 
 export type LuaCallback = (...args: any[]) => void | Promise<void>;
+
+/**
+ * The commit a directory's git checkout is at: the short SHA, with "-dirty"
+ * when tracked files have uncommitted changes. Untracked files don't count, so
+ * a stray scratch file doesn't mark a clean checkout dirty. Undefined when the
+ * directory isn't in a git checkout or git can't be run.
+ */
+export function gitVersion(dir: string): string | undefined {
+  const git = (args: string[]) =>
+    execFileSync('git', ['-C', dir, ...args], {
+      encoding: 'utf-8',
+      timeout: 2000,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+  try {
+    const sha = git(['rev-parse', '--short', 'HEAD']);
+    if (!sha) return undefined;
+    const dirty = git(['status', '--porcelain', '--untracked-files=no']) !== '';
+    return dirty ? `${sha}-dirty` : sha;
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * The SQLite handle exposed to Lua scripts by `dbOpen`.
@@ -141,6 +165,21 @@ export class LuaEngine {
     this.engine.doStringSync(`
       function getenv(name)
         local v = __getenv(name)
+        return v
+      end
+    `);
+
+    // Which commit the scripts are at, so a script can say so as it loads and
+    // its log records exactly what code ran: "4c266b6", or "4c266b6-dirty" with
+    // uncommitted edits. Wasmoon's Lua can neither read .git nor run git, and an
+    // environment variable set at launch goes stale the first time the scripts
+    // are committed and reloaded, so it is asked at call time. Defaults to the
+    // directory of the script being loaded. Nil outside a git checkout, by the
+    // same wrapper as getenv.
+    this.engine.global.set('__scriptVersion', (dir?: string) => gitVersion(dir ?? process.cwd()));
+    this.engine.doStringSync(`
+      function scriptVersion(dir)
+        local v = __scriptVersion(dir or SCRIPT_DIR)
         return v
       end
     `);
