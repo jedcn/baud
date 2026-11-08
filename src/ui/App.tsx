@@ -19,6 +19,7 @@ import { useAppState } from '../state/StateContext.js';
 import { TimerManager } from '../timers/TimerManager.js';
 import { OutboundTriggerManager } from '../triggers/OutboundTriggerManager.js';
 import { TriggerManager } from '../triggers/TriggerManager.js';
+import { BAUD_VERSION } from '../version.js';
 import { InputArea } from './InputArea.js';
 import { OutputArea } from './OutputArea.js';
 import { StatusArea } from './StatusArea.js';
@@ -105,7 +106,9 @@ export function App({
   useEffect(() => {
     if (profile && !state.connection.currentConnection) {
       const bytesLogger = logBytesFile ? new SessionLogger(logBytesFile) : undefined;
-      const textLogger = logTextFile ? new TextLogger(logTextFile) : undefined;
+      const textLogger = logTextFile
+        ? new TextLogger(logTextFile, BAUD_VERSION ?? 'unknown')
+        : undefined;
       textLoggerRef.current = textLogger;
 
       // Collect why-did-it-end facts for a diagnostic report. Print it on any

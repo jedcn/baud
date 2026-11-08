@@ -2,6 +2,7 @@ import { Database } from 'bun:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { LuaFactory, type LuaEngine as WasmoonEngine } from 'wasmoon';
+import { gitVersion } from '../version.js';
 
 export type LuaCallback = (...args: any[]) => void | Promise<void>;
 
@@ -141,6 +142,21 @@ export class LuaEngine {
     this.engine.doStringSync(`
       function getenv(name)
         local v = __getenv(name)
+        return v
+      end
+    `);
+
+    // Which commit the scripts are at, so a script can say so as it loads and
+    // its log records exactly what code ran: "4c266b6", or "4c266b6-dirty" with
+    // uncommitted edits. Wasmoon's Lua can neither read .git nor run git, and an
+    // environment variable set at launch goes stale the first time the scripts
+    // are committed and reloaded, so it is asked at call time. Defaults to the
+    // directory of the script being loaded. Nil outside a git checkout, by the
+    // same wrapper as getenv.
+    this.engine.global.set('__scriptVersion', (dir?: string) => gitVersion(dir ?? process.cwd()));
+    this.engine.doStringSync(`
+      function scriptVersion(dir)
+        local v = __scriptVersion(dir or SCRIPT_DIR)
         return v
       end
     `);
